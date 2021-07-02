@@ -1,0 +1,192 @@
+{
+    "id": "ginsim",
+    "name": "GINsim",
+    "version": "3.0.0b",
+    "description": "Tool for the modeling and simulation of genetic regulatory networks.",
+    "urls": [{"type": "Home page", "url": "http://ginsim.org/"}],
+    "image": null,
+    "authors": [{
+            "firstName": "Aurélien",
+            "lastName": "Naldi",
+            "identifiers": []
+        },
+        {
+            "firstName": "Duncan",
+            "lastName": "Berenguier",
+            "identifiers": []
+        },
+        {
+            "firstName": "Adrien",
+            "lastName": "Fauré",
+            "identifiers": []
+        },
+        {
+            "firstName": "Fabrice",
+            "lastName": "Lopez",
+            "identifiers": []
+        },
+        {
+            "firstName": "Denis",
+            "lastName": "Thieffry",
+            "identifiers": []
+        },
+        {
+            "firstName": "Claudine",
+            "lastName": "Chaouiya",
+            "identifiers": []
+        },
+        {
+            "firstName": "Pedro",
+            "middleName": "Tiago",
+            "lastName": "Monteiro",
+            "identifiers": []
+        },
+        {
+            "firstName": "Nuno",
+            "lastName": "Mendes",
+            "identifiers": []
+        },
+        {
+            "firstName": "Frederic",
+            "lastName": "Cordeil",
+            "identifiers": []
+        },
+        {
+            "firstName": "Aitor",
+            "lastName": "Gonzalez",
+            "identifiers": []
+        },
+        {
+            "firstName": "Kevin",
+            "lastName": "Mathieu",
+            "identifiers": []
+        },
+        {
+            "firstName": "Thomas",
+            "lastName": "Marcq",
+            "identifiers": []
+        },
+        {
+            "firstName": "Cecile",
+            "lastName": "Menahem",
+            "identifiers": []
+        },
+        {
+            "firstName": "Romain",
+            "lastName": "Muti",
+            "identifiers": []
+        },
+        {
+            "firstName": "Lionel",
+            "lastName": "Spinelli",
+            "identifiers": []
+        }
+    ],
+    "references": {
+        "identifiers": [
+            {
+            "namespace": "pypi",
+            "id": "ginsim",
+            "url": "https://pypi.org/project/ginsim"
+        },
+            {
+            "namespace": "biotools",
+            "id": "ginsim",
+            "url": "https://bio.tools/ginsim"
+        }
+        ],
+        "citations": [{
+            "title": "Logical modelling of regulatory networks with GINsim 2.3",
+            "authors": "Aurélien Naldi, Duncan Berenguier, Adrien Fauré, Fabrice Lopez, Denis Thieffry & Claudine Chaouiya",
+            "journal": "Biosystems",
+            "volume": 97,
+            "issue": 2,
+            "year": 2009,
+            "pages": "134-139",
+            "identifiers": [{
+                "namespace": "doi",
+                "id": "10.1016/j.biosystems.2009.04.008",
+                "url": "https://doi.org/10.1016/j.biosystems.2009.04.008"
+            }]
+        }]
+    },
+    "license": {
+        "namespace": "SPDX",
+        "id": "GPL-3.0-only"
+    },
+    "algorithms": [{
+            "id": "synchronous",
+            "name": "time series with synchronous state transitions",
+            "kisaoId": {
+                "namespace": "KISAO",
+                "id": "KISAO_0000449"
+            },
+            "modelingFrameworks": [{
+                "namespace": "SBO",
+                "id": "SBO_0000547"
+            }],
+            "modelFormats": [{
+                "namespace": "EDAM",
+                "id": "format_2585", "version": null, "supportedFeatures": []
+            }],
+            "simulationFormats": [],
+            "archiveFormats": [],
+            "parameters": null,
+            "dependentDimensions": [{
+                "namespace": "SIO",
+                "id": "SIO_000418"
+              }],
+              "dependentVariableTargetPatterns": [
+                {
+                  "variables": "species levels",
+                  "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
+                }
+              ],
+            "availableSoftwareInterfaceTypes": ["desktop application"],
+            "dependencies": null,
+            "citations": []
+        },
+        {
+            "id": "asynchronous",
+            "name": "time series with asynchronous state transitions",
+            "kisaoId": {
+                "namespace": "KISAO",
+                "id": "KISAO_0000450"
+            },
+            "modelingFrameworks": [{
+                "namespace": "SBO",
+                "id": "SBO_0000547"
+            }],
+            "modelFormats": [{
+                "namespace": "EDAM",
+                "id": "format_2585", "version": null, "supportedFeatures": []
+            }],
+            "simulationFormats": [],
+            "archiveFormats": [],
+            "parameters": null,
+            "dependentDimensions": [{
+                "namespace": "SIO",
+                "id": "SIO_000418"
+              }],
+              "dependentVariableTargetPatterns": [
+                {
+                  "variables": "species levels",
+                  "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
+                }
+              ],
+            "availableSoftwareInterfaceTypes": ["desktop application"],
+            "dependencies": null,
+            "citations": []
+        }
+    ],
+    "interfaceTypes": ["desktop application"],
+    "supportedOperatingSystemTypes": ["platform-independent"],
+    "supportedProgrammingLanguages": [],
+    "funding": [],
+    "biosimulators": {
+        "specificationVersion": "1.0.0",
+        "imageVersion": "1.0.0",
+        "validated": false,
+        "validationTests": null
+    }
+}
