@@ -27,7 +27,6 @@ jobs:
       dockerRegistry: ${{ steps.get-docker-image-tag.outputs.dockerRegistry }}
       release: ${{ steps.determine-if-release-needed.outputs.release }}
       docsChanged: ${{ steps.commit-docs.outputs.docsChanged }}
-      baseDockerImageUrl: ${{ steps.get-docker-image-tag.outputs.baseDockerImageUrl }}
     steps:
       - name: Clone repository
         run: |
@@ -139,42 +138,20 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y --no-install-recommends jq
 
-          mkdir -p empty-docker-context
-          cp Dockerfile-base empty-docker-context/
-
           SIMULATOR_ID=$(jq -r '.id' biosimulators.json)
           SIMULATOR_VERSION=$(jq -r '.version' biosimulators.json)
           SIMULATOR_NAME=$(jq -r '.name' biosimulators.json)
           IMAGE_BASE_URL=$(jq -r '.image.url' biosimulators.json | cut -d : -f 1)
           DOCKER_REGISTRY=$(echo $IMAGE_BASE_URL | cut -d / -f 1)
-          BASE_DOCKER_IMAGE_URL=biosimulators/biosimulators_ginsim/ginsim_base
 
           echo "::set-output name=simulatorId::${SIMULATOR_ID}"
           echo "::set-output name=simulatorVersion::${SIMULATOR_VERSION}"
           echo "::set-output name=simulatorName::${SIMULATOR_NAME}"
           echo "::set-output name=dockerImageBaseUrl::${IMAGE_BASE_URL}"
           echo "::set-output name=dockerRegistry::${DOCKER_REGISTRY}"
-          echo "::set-output name=baseDockerImageUrl::${BASE_DOCKER_IMAGE_URL}"
 
-      - name: Build the base for the Docker image
-        uses: whoan/docker-build-with-cache-action@v5
-        with:
-            registry: ${{ steps.get-docker-image-tag.outputs.dockerRegistry }}
-            username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
-            password: "${{ secrets.DOCKER_REGISTRY_TOKEN }}"
-            image_name: ${{ steps.get-docker-image-tag.outputs.baseDockerImageUrl }}
-            image_tag: ${{ steps.get-docker-image-tag.outputs.simulatorVersion }}
-            build_extra_args: "--build-arg SIMULATOR_VERSION=${{ steps.get-docker-image-tag.outputs.simulatorVersion }}"
-            dockerfile: Dockerfile-base
-            context: empty-docker-context
-      
-      - id: build-docker-image
-        name: Build Docker image
+      - name: Build Docker image
         run: |
-          docker tag \
-            ${{ steps.get-docker-image-tag.outputs.dockerRegistry }}/${{ steps.get-docker-image-tag.outputs.baseDockerImageUrl }}:${{ steps.get-docker-image-tag.outputs.simulatorVersion }} \
-            ${{ steps.get-docker-image-tag.outputs.dockerRegistry }}/${{ steps.get-docker-image-tag.outputs.baseDockerImageUrl }}:latest
-
           REVISION=$(git rev-parse HEAD)
           CREATED=$(date --rfc-3339=seconds | sed 's/ /T/')
           docker build \
@@ -348,7 +325,6 @@ jobs:
           docker login ${{ steps.get-docker-image-tag.outputs.dockerRegistry }} \
             --username ${{ secrets.DOCKER_REGISTRY_USERNAME }} \
             --password ${{ secrets.DOCKER_REGISTRY_TOKEN }}
-
           docker push ${{ steps.get-docker-image-tag.outputs.dockerImageBaseUrl }}:${{ steps.get-docker-image-tag.outputs.simulatorVersion }}
 
           if [[ "${{ github.ref }}" =~ ^refs/tags/ ]] || [ "${{ github.event.inputs.simulatorVersionLatest }}" == "true" ]; then
