@@ -3,8 +3,20 @@
     "name": "GINsim",
     "version": "3.0.0b",
     "description": "Tool for the modeling and simulation of genetic regulatory networks.",
-    "urls": [{"type": "Home page", "url": "http://ginsim.org/"}],
-    "image": null,
+    "urls": [{
+        "type": "Home page",
+        "url": "http://ginsim.org/"
+    }],
+    "image": {
+        "url": "ghcr.io/biosimulators/biosimulators_ginsim/ginsim:3.0.0b",
+        "format": {
+            "namespace": "EDAM",
+            "id": "format_3973",
+            "version": null,
+            "supportedFeatures": []
+        },
+        "operatingSystemType": "Linux"
+    },
     "authors": [{
             "firstName": "Aurélien",
             "lastName": "Naldi",
@@ -83,17 +95,16 @@
         }
     ],
     "references": {
-        "identifiers": [
+        "identifiers": [{
+                "namespace": "pypi",
+                "id": "ginsim",
+                "url": "https://pypi.org/project/ginsim"
+            },
             {
-            "namespace": "pypi",
-            "id": "ginsim",
-            "url": "https://pypi.org/project/ginsim"
-        },
-            {
-            "namespace": "biotools",
-            "id": "ginsim",
-            "url": "https://bio.tools/ginsim"
-        }
+                "namespace": "biotools",
+                "id": "ginsim",
+                "url": "https://bio.tools/ginsim"
+            }
         ],
         "citations": [{
             "title": "Logical modelling of regulatory networks with GINsim 2.3",
@@ -127,22 +138,28 @@
             }],
             "modelFormats": [{
                 "namespace": "EDAM",
-                "id": "format_2585", "version": null, "supportedFeatures": []
+                "id": "format_2585",
+                "version": null,
+                "supportedFeatures": []
+            },
+            {
+                "namespace": "EDAM",
+                "id": "format_9008",
+                "version": null,
+                "supportedFeatures": []
             }],
             "simulationFormats": [],
             "archiveFormats": [],
-            "parameters": null,
+            "parameters": [],
             "dependentDimensions": [{
                 "namespace": "SIO",
                 "id": "SIO_000418"
-              }],
-              "dependentVariableTargetPatterns": [
-                {
-                  "variables": "species levels",
-                  "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
-                }
-              ],
-            "availableSoftwareInterfaceTypes": ["desktop application"],
+            }],
+            "dependentVariableTargetPatterns": [{
+                "variables": "species levels",
+                "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
+            }],
+            "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"],
             "dependencies": null,
             "citations": []
         },
@@ -159,29 +176,38 @@
             }],
             "modelFormats": [{
                 "namespace": "EDAM",
-                "id": "format_2585", "version": null, "supportedFeatures": []
+                "id": "format_2585",
+                "version": null,
+                "supportedFeatures": []
+            },
+            {
+                "namespace": "EDAM",
+                "id": "format_9008",
+                "version": null,
+                "supportedFeatures": []
             }],
             "simulationFormats": [],
             "archiveFormats": [],
-            "parameters": null,
+            "parameters": [],
             "dependentDimensions": [{
                 "namespace": "SIO",
                 "id": "SIO_000418"
-              }],
-              "dependentVariableTargetPatterns": [
-                {
-                  "variables": "species levels",
-                  "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
-                }
-              ],
-            "availableSoftwareInterfaceTypes": ["desktop application"],
+            }],
+            "dependentVariableTargetPatterns": [{
+                "variables": "species levels",
+                "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
+            }],
+            "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"],
             "dependencies": null,
             "citations": []
         }
     ],
-    "interfaceTypes": ["desktop application"],
+    "interfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"],
     "supportedOperatingSystemTypes": ["platform-independent"],
-    "supportedProgrammingLanguages": [],
+    "supportedProgrammingLanguages": [{
+        "namespace": "Linguist",
+        "id": "Python"
+    }],
     "funding": [],
     "biosimulators": {
         "specificationVersion": "1.0.0",

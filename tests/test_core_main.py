@@ -1,13 +1,13 @@
 """ Tests of the command-line interface
 
 :Author: Jonathan Karr <karr@mssm.edu>
-:Date: 2020-10-29
+:Date: 2021-07-07
 :Copyright: 2020, Center for Reproducible Biomedical Modeling
 :License: MIT
 """
 
-from biosimulators_boolnet import __main__
-from biosimulators_boolnet import core
+from biosimulators_ginsim import __main__
+from biosimulators_ginsim import core
 from biosimulators_utils.combine import data_model as combine_data_model
 from biosimulators_utils.combine.io import CombineArchiveWriter
 from biosimulators_utils.config import get_config
@@ -34,9 +34,10 @@ import yaml
 
 
 class CliTestCase(unittest.TestCase):
-    EXAMPLE_MODEL_FILENAME = os.path.join(os.path.dirname(__file__), 'fixtures', 'example-model.xml')
+    EXAMPLE_SBML_MODEL_FILENAME = os.path.join(os.path.dirname(__file__), 'fixtures', 'example-model.xml')
+    EXAMPLE_ZGINML_MODEL_FILENAME = os.path.join(os.path.dirname(__file__), 'fixtures', 'SuppMat_Model_Master_Model.zginml')
     SPECIFICATIONS_FILENAME = os.path.join(os.path.dirname(__file__), '..', 'biosimulators.json')
-    DOCKER_IMAGE = 'ghcr.io/biosimulators/biosimulators_boolnet/boolnet:latest'
+    DOCKER_IMAGE = 'ghcr.io/biosimulators/biosimulators_ginsim/ginsim:latest'
     NAMESPACES = {
         None: 'http://sed-ml.org/sed-ml/level1/version3',
         'sbml': 'http://www.sbml.org/sbml/level3/version1/core',
@@ -49,25 +50,19 @@ class CliTestCase(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.dirname)
 
-    def test_exec_sed_task_successfully(self):
+    def test_exec_sbml_sed_task_successfully(self):
         task = sedml_data_model.Task(
             model=sedml_data_model.Model(
-                source=self.EXAMPLE_MODEL_FILENAME,
+                source=self.EXAMPLE_SBML_MODEL_FILENAME,
                 language=sedml_data_model.ModelLanguage.SBML.value,
             ),
             simulation=sedml_data_model.UniformTimeCourseSimulation(
                 initial_time=0,
-                output_start_time=10,
-                output_end_time=15,
-                number_of_points=5,
+                output_start_time=0,
+                output_end_time=10,
+                number_of_points=10,
                 algorithm=sedml_data_model.Algorithm(
                     kisao_id='KISAO_0000449',
-                    changes=[
-                        sedml_data_model.AlgorithmParameterChange(
-                            kisao_id='KISAO_0000572',
-                            new_value='0.0',
-                        ),
-                    ],
                 ),
             ),
         )
@@ -91,32 +86,22 @@ class CliTestCase(unittest.TestCase):
 
         # synchronous method
         task.simulation.algorithm.kisao_id = 'KISAO_0000449'
-        variable_results, _ = core.exec_sed_task(task, variables)
+        variable_results, log = core.exec_sed_task(task, variables)
         self.assertEqual(set(variable_results.keys()), set(['Time', 'G0', 'G1']))
         for variable_result in variable_results.values():
             self.assertFalse(numpy.any(numpy.isnan(variable_result)))
-        numpy.testing.assert_allclose(variable_results['Time'], numpy.linspace(10, 15, 6))
+        numpy.testing.assert_allclose(variable_results['Time'], numpy.linspace(0, 10, 10 + 1))
 
         # asynchronous method
         task.simulation.algorithm.kisao_id = 'KISAO_0000450'
         task.simulation.algorithm.changes.append(sedml_data_model.AlgorithmParameterChange(
             kisao_id='KISAO_0000574',
-            new_value=json.dumps({'G0': 0.2, 'G1': 0.3, 'G2': 0.5}),
         ))
-        variable_results, _ = core.exec_sed_task(task, variables)
-        self.assertEqual(set(variable_results.keys()), set(['Time', 'G0', 'G1']))
-        for variable_result in variable_results.values():
-            self.assertFalse(numpy.any(numpy.isnan(variable_result)))
-        numpy.testing.assert_allclose(variable_results['Time'], numpy.linspace(10, 15, 6))
-
-        # probabilstic method
-        task.simulation.algorithm.kisao_id = 'KISAO_0000573'
-        task.simulation.algorithm.changes.pop()
         variable_results, log = core.exec_sed_task(task, variables)
         self.assertEqual(set(variable_results.keys()), set(['Time', 'G0', 'G1']))
         for variable_result in variable_results.values():
             self.assertFalse(numpy.any(numpy.isnan(variable_result)))
-        numpy.testing.assert_allclose(variable_results['Time'], numpy.linspace(10, 15, 6))
+        numpy.testing.assert_allclose(variable_results['Time'], numpy.linspace(0, 10, 10 + 1))
 
         # check that log can be serialized to JSON
         json.dumps(log.to_json())
@@ -127,34 +112,65 @@ class CliTestCase(unittest.TestCase):
             log_data = yaml.load(file, Loader=yaml.Loader)
         json.dumps(log_data)
 
-        # error handling: invalid algorithm
-        task.simulation.algorithm.kisao_id = 'KISAO_0000019'
-        with self.assertRaises(AlgorithmCannotBeSubstitutedException):
-            core.exec_sed_task(task, variables)
-
-        task.simulation.algorithm.kisao_id = 'KISAO_0000449'
-        task.simulation.algorithm.changes = [
-            sedml_data_model.AlgorithmParameterChange(
-                kisao_id='KISAO_0000572',
-                new_value='not a number',
+    def test_exec_zginml_sed_task_successfully(self):
+        task = sedml_data_model.Task(
+            model=sedml_data_model.Model(
+                source=self.EXAMPLE_ZGINML_MODEL_FILENAME,
+                language=sedml_data_model.ModelLanguage.ZGINML.value,
             ),
+            simulation=sedml_data_model.UniformTimeCourseSimulation(
+                initial_time=0,
+                output_start_time=0,
+                output_end_time=10,
+                number_of_points=10,
+                algorithm=sedml_data_model.Algorithm(
+                    kisao_id='KISAO_0000449',
+                ),
+            ),
+        )
+
+        variables = [
+            sedml_data_model.Variable(
+                id='Time',
+                symbol=sedml_data_model.Symbol.time,
+                task=task),
+            sedml_data_model.Variable(
+                id='AKT1',
+                target="AKT1",
+                task=task),
+            sedml_data_model.Variable(
+                id='DKK1',
+                target="DKK1",
+                task=task),
         ]
-        with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'NONE'}):
-            with self.assertRaisesRegex(ValueError, 'is not a valid'):
-                core.exec_sed_task(task, variables)
 
-        with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'SIMILAR_VARIABLES'}):
-            with self.assertWarnsRegex(BioSimulatorsWarning, 'Unsuported value'):
-                core.exec_sed_task(task, variables)
+        # synchronous method
+        task.simulation.algorithm.kisao_id = 'KISAO_0000449'
+        variable_results, log = core.exec_sed_task(task, variables)
+        self.assertEqual(set(variable_results.keys()), set(['Time', 'AKT1', 'DKK1']))
+        for variable_result in variable_results.values():
+            self.assertFalse(numpy.any(numpy.isnan(variable_result)))
+        numpy.testing.assert_allclose(variable_results['Time'], numpy.linspace(0, 10, 10 + 1))
 
-        task.simulation.algorithm.changes[0].kisao_id = 'KISAO_0000531'
-        with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'NONE'}):
-            with self.assertRaisesRegex(NotImplementedError, 'is not supported'):
-                core.exec_sed_task(task, variables)
+        # asynchronous method
+        task.simulation.algorithm.kisao_id = 'KISAO_0000450'
+        task.simulation.algorithm.changes.append(sedml_data_model.AlgorithmParameterChange(
+            kisao_id='KISAO_0000574',
+        ))
+        variable_results, log = core.exec_sed_task(task, variables)
+        self.assertEqual(set(variable_results.keys()), set(['Time', 'AKT1', 'DKK1']))
+        for variable_result in variable_results.values():
+            self.assertFalse(numpy.any(numpy.isnan(variable_result)))
+        numpy.testing.assert_allclose(variable_results['Time'], numpy.linspace(0, 10, 10 + 1))
 
-        with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'SIMILAR_VARIABLES'}):
-            with self.assertWarnsRegex(BioSimulatorsWarning, 'Unsuported algorithm parameter'):
-                core.exec_sed_task(task, variables)
+        # check that log can be serialized to JSON
+        json.dumps(log.to_json())
+
+        log.out_dir = self.dirname
+        log.export()
+        with open(os.path.join(self.dirname, get_config().LOG_PATH), 'rb') as file:
+            log_data = yaml.load(file, Loader=yaml.Loader)
+        json.dumps(log_data)
 
     def test_exec_sedml_docs_in_combine_archive_successfully(self):
         doc, archive_filename = self._build_combine_archive()
@@ -176,19 +192,19 @@ class CliTestCase(unittest.TestCase):
         if not os.path.isdir(archive_dirname):
             os.mkdir(archive_dirname)
 
-        model_filename = os.path.join(archive_dirname, 'model_1.xml')
-        shutil.copyfile(self.EXAMPLE_MODEL_FILENAME, model_filename)
+        model_filename = os.path.join(archive_dirname, 'model.xml')
+        shutil.copyfile(self.EXAMPLE_SBML_MODEL_FILENAME, model_filename)
 
-        sim_filename = os.path.join(archive_dirname, 'sim_1.sedml')
+        sim_filename = os.path.join(archive_dirname, 'sim.sedml')
         SedmlSimulationWriter().run(doc, sim_filename)
 
         updated = datetime.datetime(2020, 1, 2, 1, 2, 3, tzinfo=dateutil.tz.tzutc())
         archive = combine_data_model.CombineArchive(
             contents=[
                 combine_data_model.CombineArchiveContent(
-                    'model_1.xml', combine_data_model.CombineArchiveContentFormat.SBML.value, updated=updated),
+                    'model.xml', combine_data_model.CombineArchiveContentFormat.SBML.value, updated=updated),
                 combine_data_model.CombineArchiveContent(
-                    'sim_1.sedml', combine_data_model.CombineArchiveContentFormat.SED_ML.value, updated=updated),
+                    'sim.sedml', combine_data_model.CombineArchiveContentFormat.SED_ML.value, updated=updated),
             ],
             updated=updated,
         )
@@ -201,22 +217,16 @@ class CliTestCase(unittest.TestCase):
         if algorithm is None:
             algorithm = sedml_data_model.Algorithm(
                 kisao_id='KISAO_0000449',
-                changes=[
-                    sedml_data_model.AlgorithmParameterChange(
-                        kisao_id='KISAO_0000572',
-                        new_value='0.0',
-                    ),
-                ],
             )
 
         doc = sedml_data_model.SedDocument()
         doc.models.append(sedml_data_model.Model(
-            id='model_1',
-            source='model_1.xml',
+            id='model',
+            source='model.xml',
             language=sedml_data_model.ModelLanguage.SBML.value,
         ))
         doc.simulations.append(sedml_data_model.UniformTimeCourseSimulation(
-            id='sim_1_time_course',
+            id='sim_time_course',
             initial_time=0,
             output_start_time=0,
             output_end_time=10,
@@ -266,7 +276,7 @@ class CliTestCase(unittest.TestCase):
         ))
 
         doc.outputs.append(sedml_data_model.Report(
-            id='report_1',
+            id='report',
             data_sets=[
                 sedml_data_model.DataSet(id='data_set_time', label='Time', data_generator=doc.data_generators[0]),
                 sedml_data_model.DataSet(id='data_set_G1', label='G1', data_generator=doc.data_generators[1]),
@@ -281,7 +291,7 @@ class CliTestCase(unittest.TestCase):
     def _assert_combine_archive_outputs(self, doc, out_dir):
         self.assertEqual(set(['reports.h5']).difference(set(os.listdir(out_dir))), set())
 
-        report = ReportReader().run(doc.outputs[0], out_dir, 'sim_1.sedml/report_1', format=report_data_model.ReportFormat.h5)
+        report = ReportReader().run(doc.outputs[0], out_dir, 'sim.sedml/report', format=report_data_model.ReportFormat.h5)
 
         self.assertEqual(sorted(report.keys()), sorted([d.id for d in doc.outputs[0].data_sets]))
 

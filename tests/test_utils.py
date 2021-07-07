@@ -1,178 +1,198 @@
-from biosimulators_boolnet.utils import (install_boolnet, get_boolnet, get_boolnet_version,
-                                         validate_time_course, validate_data_generator_variables,
-                                         get_variable_target_x_path_keys,
-                                         set_simulation_method_arg, get_variable_results)
-from biosimulators_utils.sedml.data_model import (UniformTimeCourseSimulation, Variable,
-                                                  Symbol, AlgorithmParameterChange)
+from biosimulators_ginsim.data_model import UpdatePolicy
+from biosimulators_ginsim.utils import (validate_time_course, get_variable_target_xpath_ids,
+                                        read_model, set_up_simulation, get_trace_arg,
+                                        exec_simulation, get_variable_results)
+from biosimulators_utils.sedml.data_model import (ModelLanguage, UniformTimeCourseSimulation,
+                                                  Algorithm, AlgorithmParameterChange,
+                                                  Variable, Symbol)
+from biosimulators_utils.warnings import BioSimulatorsWarning
+from kisao.exceptions import AlgorithmCannotBeSubstitutedException
+from kisao.warnings import AlgorithmSubstitutedWarning
 from unittest import mock
-import numpy
 import numpy.testing
 import os
-import pandas
 import unittest
 
 
 class UtilsTestCase(unittest.TestCase):
-    def test_install_boolnet(self):
-        install_boolnet()
-
-        with mock.patch.dict(os.environ, {'BOOLNET_VERSION': get_boolnet_version()}):
-            install_boolnet()
-
-    def test_get_boolnet(self):
-        pkg = get_boolnet()
-        self.assertRegex(pkg.__version__, r'^\d+\.\d+\.\d+$')
-
-    def test_get_bionetgen_version(self):
-        self.assertRegex(get_boolnet_version(), r'^\d+\.\d+\.\d+$')
-
     def test_validate_time_course(self):
         sim = UniformTimeCourseSimulation(initial_time=0, output_start_time=0, output_end_time=100, number_of_points=100)
-        self.assertEqual(validate_time_course(sim), [])
+        self.assertEqual(validate_time_course(sim), ([], []))
+
+        sim = UniformTimeCourseSimulation(initial_time=0, output_start_time=0, output_end_time=100, number_of_points=50)
+        self.assertEqual(validate_time_course(sim), ([], []))
 
         sim = UniformTimeCourseSimulation(initial_time=1, output_start_time=1, output_end_time=100, number_of_points=99)
-        self.assertNotEqual(validate_time_course(sim), [])
+        self.assertNotEqual(validate_time_course(sim), ([], []))
 
         sim = UniformTimeCourseSimulation(initial_time=0, output_start_time=0.1, output_end_time=100, number_of_points=100)
-        self.assertNotEqual(validate_time_course(sim), [])
+        self.assertNotEqual(validate_time_course(sim), ([], []))
 
         sim = UniformTimeCourseSimulation(initial_time=0, output_start_time=0, output_end_time=100.1, number_of_points=100)
-        self.assertNotEqual(validate_time_course(sim), [])
+        self.assertNotEqual(validate_time_course(sim), ([], []))
 
         sim = UniformTimeCourseSimulation(initial_time=0, output_start_time=0, output_end_time=100, number_of_points=101)
-        self.assertNotEqual(validate_time_course(sim), [])
+        self.assertNotEqual(validate_time_course(sim), ([], []))
 
-    def test_validate_data_generator_variables(self):
-        alg_kisao_id = 'KISAO_0000573'
-        variables = [
-            Variable(
-                symbol=Symbol.time),
-            Variable(
-                target="/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies[@id='x']/@level"),
-            Variable(
-                target="/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies[@id='y']"),
-            Variable(
-                target="/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies[@name='Y']"),
-            Variable(
-                target="/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies/@level"),
-            Variable(
-                target="/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies")
-        ]
-        validate_data_generator_variables(variables, alg_kisao_id)
-
-        variables = [Variable(symbol='x')]
-        with self.assertRaises(NotImplementedError):
-            validate_data_generator_variables(variables, alg_kisao_id)
-
-        variables = [Variable(target='x')]
-        with self.assertRaises(ValueError):
-            validate_data_generator_variables(variables, alg_kisao_id)
-
-    def test_get_variable_target_x_path_keys(self):
+    def test_get_variable_target_xpath_ids(self):
         with mock.patch('lxml.etree.parse', return_value=None):
             with mock.patch('biosimulators_utils.xml.utils.get_namespaces_for_xml_doc', return_value={'qual': None}):
-                with mock.patch('biosimulators_utils.sedml.validation.validate_variable_xpaths', side_effect=[{'x': 'X'}, {'x': 'eX'}]):
-                    self.assertEqual(get_variable_target_x_path_keys([Variable(target='x')], None), {'x': 'eX'})
+                with mock.patch('biosimulators_utils.sedml.validation.validate_variable_xpaths', return_value={'x': 'X'}):
+                    self.assertEqual(get_variable_target_xpath_ids([Variable(target='x')], None), {'x': 'X'})
 
-                with mock.patch('biosimulators_utils.sedml.validation.validate_variable_xpaths', side_effect=[{'x': 'X'}, {'x': None}]):
-                    self.assertEqual(get_variable_target_x_path_keys([Variable(target='x')], None), {'x': 'X'})
+    def test_read_model(self):
+        filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'SuppMat_Model_Master_Model.zginml')
+        read_model(filename)
 
-                with mock.patch('biosimulators_utils.sedml.validation.validate_variable_xpaths', side_effect=[{'x': 'X'}, {'x': 'e/X'}]):
-                    self.assertEqual(get_variable_target_x_path_keys([Variable(target='x')], None), {'x': 'e_X'})
+        filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'example-model.sbml')
+        read_model(filename)
 
-                with mock.patch('biosimulators_utils.sedml.validation.validate_variable_xpaths', side_effect=[
-                    {'x': 'X', 'y': 'Y'},
-                    {'x': 'name-X', 'y': 'name-Y'},
-                ]):
-                    get_variable_target_x_path_keys([Variable(target='x'), Variable(target='y')], None)
+        filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'example-model.xml')
+        read_model(filename)
 
-                with mock.patch('biosimulators_utils.sedml.validation.validate_variable_xpaths', side_effect=[
-                    {'x': 'X', 'y': 'Y'},
-                    {'x': 'name', 'y': 'name'},
-                ]):
-                    with self.assertRaisesRegex(ValueError, 'must generate a unique key'):
-                        get_variable_target_x_path_keys([Variable(target='x'), Variable(target='y')], None)
+        with self.assertRaises(FileNotFoundError):
+            read_model('not a file')
 
-    def test_set_simulation_method_arg(self):
-        class Model(list):
-            def __init__(self):
-                super(Model, self).__init__()
-                self.append(['A', 'B'])
-
-            @property
-            def names(self):
-                return ['genes']
-
-        model = Model()
-
-        algorithm_kisao_id = 'KISAO_0000450'
-        parameter_change = AlgorithmParameterChange(kisao_id='KISAO_0000572', new_value='0.9')
-        simulation_method_args = {}
-        set_simulation_method_arg(model, algorithm_kisao_id, parameter_change, simulation_method_args)
-        self.assertEqual(simulation_method_args, {'noiseLevel': 0.9})
-
-        parameter_change.kisao_id = 'KISAO_0000574'
-        parameter_change.new_value = '{"A": 0.3, "B": 0.7}'
-        set_simulation_method_arg(model, algorithm_kisao_id, parameter_change, simulation_method_args)
-        self.assertEqual(list(simulation_method_args['geneProbabilities']), [0.3, 0.7])
-
-        parameter_change.kisao_id = 'KISAO_0000574'
-        parameter_change.new_value = '{"A": 0.3}'
+        filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'invalid.zginml')
         with self.assertRaises(ValueError):
-            set_simulation_method_arg(model, algorithm_kisao_id, parameter_change, simulation_method_args)
+            read_model(filename)
 
-        parameter_change.kisao_id = 'KISAO_0000574'
-        parameter_change.new_value = '{"A": 0.3, "B": 0.6, "C": 0.1}'
+        filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'regulatoryGraph.ginml')
         with self.assertRaises(ValueError):
-            set_simulation_method_arg(model, algorithm_kisao_id, parameter_change, simulation_method_args)
+            read_model(filename)
 
-        parameter_change.kisao_id = 'KISAO_0000574'
-        parameter_change.new_value = '{"A": 0.3, "B": -0.6}'
-        with self.assertRaises(ValueError):
-            set_simulation_method_arg(model, algorithm_kisao_id, parameter_change, simulation_method_args)
+    def test_set_up_simulation(self):
+        simulation = UniformTimeCourseSimulation(
+            output_end_time=100,
+            algorithm=Algorithm(kisao_id='KISAO_0000449'))
+        kisao_id, max_steps, update_policy = set_up_simulation(simulation)
+        self.assertEqual(kisao_id, 'KISAO_0000449')
+        self.assertEqual(max_steps, 100)
+        self.assertEqual(update_policy, UpdatePolicy.synchronous)
 
-        parameter_change.kisao_id = 'KISAO_0000574'
-        parameter_change.new_value = '{"A": 0.3, "B": 0.8}'
-        with self.assertRaises(ValueError):
-            set_simulation_method_arg(model, algorithm_kisao_id, parameter_change, simulation_method_args)
+        simulation.algorithm.kisao_id = 'KISAO_0000448'
+        with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'NONE'}):
+            with self.assertRaises(AlgorithmCannotBeSubstitutedException):
+                set_up_simulation(simulation)
 
-        parameter_change.kisao_id = 'KISAO_0000001'
-        parameter_change.new_value = '0.9'
-        with self.assertRaises(NotImplementedError):
-            set_simulation_method_arg(model, algorithm_kisao_id, parameter_change, simulation_method_args)
+        simulation.algorithm.kisao_id = 'KISAO_0000448'
+        with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'SIMILAR_VARIABLES'}):
+            with self.assertWarns(AlgorithmSubstitutedWarning):
+                kisao_id, max_steps, update_policy = set_up_simulation(simulation)
+        self.assertEqual(kisao_id, 'KISAO_0000449')
+        self.assertEqual(max_steps, 100)
+        self.assertEqual(update_policy, UpdatePolicy.synchronous)
 
-        parameter_change.kisao_id = 'KISAO_0000572'
-        parameter_change.new_value = 'one point nine'
-        with self.assertRaises(ValueError):
-            set_simulation_method_arg(model, algorithm_kisao_id, parameter_change, simulation_method_args)
+        simulation.algorithm.kisao_id = 'KISAO_0000449'
+        simulation.algorithm.changes = [AlgorithmParameterChange()]
+        with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'NONE'}):
+            with self.assertRaises(NotImplementedError):
+                set_up_simulation(simulation)
 
-        parameter_change.kisao_id = 'KISAO_0000572'
-        parameter_change.new_value = '-0.9'
-        with self.assertRaises(ValueError):
-            set_simulation_method_arg(model, algorithm_kisao_id, parameter_change, simulation_method_args)
+        with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'SIMILAR_VARIABLES'}):
+            with self.assertWarns(BioSimulatorsWarning):
+                set_up_simulation(simulation)
 
-    def test_get_variable_results(self):
-        sim = UniformTimeCourseSimulation(initial_time=0, output_start_time=0, output_end_time=2, number_of_points=2)
-        data = numpy.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-        species_results = pandas.DataFrame(data, index=['A', 'B', 'C']).transpose()
+        simulation.algorithm.kisao_id = 'KISAO_0000448'
+        simulation.algorithm.changes = [AlgorithmParameterChange()]
+        with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'SIMILAR_VARIABLES'}):
+            with self.assertWarns(BioSimulatorsWarning):
+                set_up_simulation(simulation)
+
+    def test_get_trace_arg(self):
+        self.assertEqual(get_trace_arg(10, UpdatePolicy.synchronous), '-m 10 -u synchronous')
+
+    def test_exec_simulation(self):
+        filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'SuppMat_Model_Master_Model.zginml')
+        model = read_model(filename)
+        raw_results = exec_simulation(model, 10, UpdatePolicy.synchronous)
+        self.assertLessEqual(len(raw_results), 10 + 1)
+
+    def test_get_variable_results_sbml(self):
+        filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'example-model.xml')
+        model = read_model(filename)
+        raw_results = exec_simulation(model, 10, UpdatePolicy.synchronous)
+
+        namespaces = {
+            'sbml': 'http://www.sbml.org/sbml/level3/version1/core',
+            'qual': 'http://www.sbml.org/sbml/level3/version1/qual/version1',
+        }
         variables = [
             Variable(
-                id='var_time',
-                symbol=Symbol.time.value),
+                id='time',
+                symbol=Symbol.time.value,
+            ),
             Variable(
-                id='var_A',
-                target="/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies[@qual:id='A']"),
+                id='G0',
+                target="/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies[@qual:id='G0']",
+                target_namespaces=namespaces,
+            ),
             Variable(
-                id='var_B',
-                target="/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies[@qual:id='B']"),
+                id='G1',
+                target="/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies[@qual:id='G1']",
+                target_namespaces=namespaces,
+            ),
         ]
+        model_language = ModelLanguage.SBML
+        target_xpath_ids = get_variable_target_xpath_ids(variables, filename)
+        simulation = UniformTimeCourseSimulation(
+            initial_time=0,
+            output_start_time=0,
+            output_end_time=10,
+            number_of_points=10,
+        )
+        results = get_variable_results(variables, model_language, target_xpath_ids, simulation, raw_results)
+        self.assertEqual(set(results.keys()), set(['time', 'G0', 'G1']))
+        numpy.testing.assert_allclose(results['time'], numpy.linspace(0, 10, 10 + 1))
+        self.assertEqual(len(results['G0']), 10 + 1)
 
-        target_x_paths_keys = {
-            variables[1].target: 'A',
-            variables[2].target: 'B',
-        }
+        simulation.output_start_time = 5
+        simulation.number_of_points = 5
+        results = get_variable_results(variables, model_language, target_xpath_ids, simulation, raw_results)
+        self.assertEqual(set(results.keys()), set(['time', 'G0', 'G1']))
+        numpy.testing.assert_allclose(results['time'], numpy.linspace(5, 10, 5 + 1))
+        self.assertEqual(len(results['G0']), 5 + 1)
 
-        variable_results = get_variable_results(sim, variables, target_x_paths_keys, species_results)
-        numpy.testing.assert_allclose(variable_results['var_time'], numpy.array([0, 1, 2]))
-        numpy.testing.assert_allclose(variable_results['var_A'], numpy.array([1, 2, 3]))
-        numpy.testing.assert_allclose(variable_results['var_B'], numpy.array([4, 5, 6]))
+        simulation.output_start_time = 2
+        simulation.number_of_points = 4
+        results = get_variable_results(variables, model_language, target_xpath_ids, simulation, raw_results)
+        self.assertEqual(set(results.keys()), set(['time', 'G0', 'G1']))
+        numpy.testing.assert_allclose(results['time'], numpy.linspace(2, 10, 4 + 1))
+        self.assertEqual(len(results['G0']), 4 + 1)
+
+        variables[0].symbol = 'undefined'
+        target_xpath_ids[variables[1].target] = 'undefined'
+        with self.assertRaises(ValueError):
+            get_variable_results(variables, model_language, target_xpath_ids, simulation, raw_results)
+
+    def test_get_variable_results_zginml(self):
+        filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'SuppMat_Model_Master_Model.zginml')
+        model = read_model(filename)
+        raw_results = exec_simulation(model, 10, UpdatePolicy.synchronous)
+
+        variables = [
+            Variable(
+                id='time',
+                symbol=Symbol.time.value,
+            ),
+            Variable(
+                id='AKT1',
+                target="AKT1",
+            ),
+            Variable(
+                id='DKK1',
+                target="DKK1",
+            ),
+        ]
+        model_language = ModelLanguage.ZGINML
+        target_xpath_ids = None
+        simulation = UniformTimeCourseSimulation(
+            initial_time=0,
+            output_start_time=0,
+            output_end_time=10,
+            number_of_points=10,
+        )
+        results = get_variable_results(variables, model_language, target_xpath_ids, simulation, raw_results)
+        self.assertEqual(set(results.keys()), set(['time', 'AKT1', 'DKK1']))
+        numpy.testing.assert_allclose(results['time'], numpy.linspace(0, 10, 10 + 1))
+        self.assertEqual(len(results['AKT1']), 10 + 1)

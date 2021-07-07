@@ -1,0 +1,23 @@
+# Dockerfile
+Dockerfile
+
+# compiled python
+biosimulators_ginsim.egg-info/
+*.pyc
+__pycache__/
+
+# specs
+biosimulators.json
+
+# tests
+tests/
+htmlcov/
+
+# documentation
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+docs-src/
+docs/
+
+# logs
+jsbml.log

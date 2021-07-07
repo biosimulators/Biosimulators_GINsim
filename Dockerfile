@@ -1,8 +1,8 @@
 # Base OS
-FROM ghcr.io/biosimulators/biosimulators_boolnet/boolnet_base:latest
+FROM python:3.9-slim-buster
 
-ARG VERSION="0.1.13"
-ARG SIMULATOR_VERSION=2.1.5
+ARG VERSION="0.0.1"
+ARG SIMULATOR_VERSION=3.0.0b
 
 # metadata
 LABEL \
@@ -11,23 +11,42 @@ LABEL \
     \
     base_image="python:3.9-slim-buster" \
     version="${VERSION}" \
-    software="BoolNet" \
+    software="GINsim" \
     software.version="${SIMULATOR_VERSION}" \
-    about.summary="Package for generation, reconstruction, simulation and analysis of synchronous, asynchronous and probabilistic Boolean networks." \
-    about.home="https://sysbio.uni-ulm.de/?Software:BoolNet" \
-    about.documentation="https://cran.r-project.org/web/packages/BoolNet/index.html" \
-    about.license_file="https://cran.r-project.org/web/licenses/Artistic-2.0" \
-    about.license="SPDX:Artistic-2.0" \
+    about.summary="Tool for modeling and simulating genetic regulatory networks." \
+    about.home="http://ginsim.org/" \
+    about.documentation="http://doc.ginsim.org/" \
+    about.license_file="http://choosealicense.com/licenses/gpl-3.0/" \
+    about.license="SPDX:GPL-3.0-only" \
     about.tags="BioSimulators,mathematical model,logical model,simulation,systems biology,computational biology,SBML,SED-ML,COMBINE,OMEX" \
     maintainer="BioSimulators Team <info@biosimulators.org>"
 
+# Install GINsim
+RUN mkdir /usr/share/man/man1/ \
+    && apt-get update -y \
+    && apt-get install -y --no-install-recommends \
+        default-jre-headless \
+        wget \
+    \
+    && cd /tmp \
+    && pip install ginsim \
+    && wget https://raw.githubusercontent.com/GINsim/GINsim-python/master/ginsim_setup.py \
+    && python ginsim_setup.py \
+    \
+    && rm ginsim_setup.py \
+    && apt-get remove -y \
+        wget \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+ENV PATH=/usr/local/share/colomoto/bin:$PATH
+
 # Copy code for command-line interface into image and install it
-COPY . /root/Biosimulators_BoolNet
-RUN pip install /root/Biosimulators_BoolNet \
-    && rm -rf /root/Biosimulators_BoolNet
+COPY . /root/Biosimulators_GINsim
+RUN pip install /root/Biosimulators_GINsim \
+    && rm -rf /root/Biosimulators_GINsim
 ENV VERBOSE=0 \
     MPLBACKEND=PDF
 
 # Entrypoint
-ENTRYPOINT ["boolnet"]
+ENTRYPOINT ["biosimulators-ginsim"]
 CMD []
