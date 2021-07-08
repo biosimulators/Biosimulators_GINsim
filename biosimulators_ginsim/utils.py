@@ -29,7 +29,6 @@ __all__ = [
     'get_variable_target_xpath_ids',
     'read_model',
     'set_up_simulation',
-    'make_args_string',
     'exec_simulation',
     'get_variable_results',
 ]
@@ -161,7 +160,7 @@ def set_up_simulation(simulation):
 
             * :obj:`str`: KiSAO of algorithm to execute
             * :obj:`str`: name of the :obj:`biolqm` simulation/analysis method
-            * :obj:`dict`: arguments for simulation method
+            * :obj:`str`: arguments for simulation method
     """
     # simulation algorithm
     alg_kisao_id = simulation.algorithm.kisao_id
@@ -169,8 +168,13 @@ def set_up_simulation(simulation):
     exec_kisao_id = get_preferred_substitute_algorithm_by_ids(
         alg_kisao_id, KISAO_ALGORITHM_MAP.keys(),
         substitution_policy=alg_substitution_policy)
-    method = KISAO_ALGORITHM_MAP[exec_kisao_id]['method']
-    method_args = KISAO_ALGORITHM_MAP[exec_kisao_id]['method_args'](simulation)
+    alg_props = KISAO_ALGORITHM_MAP[exec_kisao_id]
+    if simulation.__class__ != alg_props['simulation_type']:
+        raise NotImplementedError('{} simulations cannot be executed with `{}` ({}).'.format(
+            simulation.__class__.__name__, exec_kisao_id, alg_props['name']))
+
+    method = alg_props['method']
+    method_args = alg_props['method_args'](simulation)
 
     # Apply the algorithm parameter changes specified by `simulation.algorithm.parameter_changes`
     if exec_kisao_id == alg_kisao_id:
@@ -190,31 +194,24 @@ def set_up_simulation(simulation):
     return (exec_kisao_id, method, method_args)
 
 
-def make_args_string(args):
-    """ Set up the argument to methods such as :obj:`biolqm.trace`
-
-    Args:
-        args (:obj:`dict`): arguments to methods such as :obj:`biolqm.trace`
-
-    Returns:
-        :obj:`str`: argument to methods such as :obj:`biolqm.trace`
-    """
-    return ' '.join('-{} {}'.format(arg, val) for arg, val in args.items())
-
-
-def exec_simulation(method_name, model, args):
+def exec_simulation(method_name, model, args=None):
     """ Execute a task
 
     Args:
         method_name (:obj:`str`): name of the :obj:`biolqm` simulation/analysis method
         model (:obj:`py4j.java_gateway.JavaObject`): model
-        args (:obj:`str`): argument to :obj:`method`
+        args (:obj:`str`, optional): argument to :obj:`method`
 
     Returns:
         :obj:`list` of :obj:`dict`: result of :obj:`method` for :obj:`model` and :obj:`args`
     """
     method = getattr(biolqm, method_name)
-    return list(method(model, make_args_string(args)))
+    if args:
+        args_list = [args]
+    else:
+        args_list = []
+    result = method(model, *args_list)
+    return list(result)
 
 
 def get_variable_results(variables, model_language, target_xpath_ids, simulation, raw_results):
@@ -231,17 +228,18 @@ def get_variable_results(variables, model_language, target_xpath_ids, simulation
     Returns:
         :obj:`VariableResults`: result of each SED-ML variable
     """
-    n_sim_steps = len(raw_results)
+    n_states = len(raw_results)
     variable_results = VariableResults()
     for variable in variables:
-        variable_results[variable.id] = numpy.full((n_sim_steps,), numpy.nan)
+        variable_results[variable.id] = numpy.full((n_states,), numpy.nan)
 
     invalid_variables = []
     for i_state, state in enumerate(raw_results):
         for variable in variables:
             if variable.symbol:
-                variable_results[variable.id][i_state] = i_state
-                if variable.symbol != Symbol.time.value:
+                if isinstance(simulation, UniformTimeCourseSimulation) and variable.symbol == Symbol.time.value:
+                    variable_results[variable.id][i_state] = i_state
+                else:
                     invalid_variables.append('{}: symbol: {}'.format(variable.id, variable.symbol))
 
             else:
@@ -258,20 +256,21 @@ def get_variable_results(variables, model_language, target_xpath_ids, simulation
         raise ValueError('The following variables could not recorded:\n  {}'.format(
             '\n  '.join(sorted(invalid_variables))))
 
-    for key in variable_results.keys():
-        variable_results[key] = numpy.concatenate((
-            variable_results[key],
-            numpy.full((int(simulation.output_end_time) + 1 - n_sim_steps,), variable_results[key][-1]),
-        ))
-    for variable in variables:
-        if variable.symbol and variable.symbol == Symbol.time.value:
-            variable_results[variable.id] = numpy.linspace(
-                int(simulation.initial_time),
-                int(simulation.output_end_time),
-                int(simulation.output_end_time) + 1)
+    if isinstance(simulation, UniformTimeCourseSimulation):
+        for key in variable_results.keys():
+            variable_results[key] = numpy.concatenate((
+                variable_results[key],
+                numpy.full((int(simulation.output_end_time) + 1 - n_states,), variable_results[key][-1]),
+            ))
+        for variable in variables:
+            if variable.symbol and variable.symbol == Symbol.time.value:
+                variable_results[variable.id] = numpy.linspace(
+                    int(simulation.initial_time),
+                    int(simulation.output_end_time),
+                    int(simulation.output_end_time) + 1)
 
-    step_size = round((simulation.output_end_time - simulation.output_start_time) / simulation.number_of_steps)
-    for key in variable_results.keys():
-        variable_results[key] = variable_results[key][int(simulation.output_start_time)::step_size]
+        step_size = round((simulation.output_end_time - simulation.output_start_time) / simulation.number_of_steps)
+        for key in variable_results.keys():
+            variable_results[key] = variable_results[key][int(simulation.output_start_time)::step_size]
 
     return variable_results

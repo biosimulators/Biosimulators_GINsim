@@ -7,14 +7,15 @@
 """
 
 from .utils import (validate_simulation, get_variable_target_xpath_ids,
-                    read_model, set_up_simulation, make_args_string, exec_simulation, get_variable_results)
+                    read_model, set_up_simulation, exec_simulation, get_variable_results)
 from biosimulators_utils.combine.exec import exec_sedml_docs_in_archive
 from biosimulators_utils.log.data_model import CombineArchiveLog, TaskLog  # noqa: F401
 from biosimulators_utils.plot.data_model import PlotFormat  # noqa: F401
 from biosimulators_utils.report.data_model import ReportFormat, VariableResults  # noqa: F401
 from biosimulators_utils.sedml import validation
 from biosimulators_utils.sedml.data_model import (Task, ModelLanguage, ModelAttributeChange,  # noqa: F401
-                                                  UniformTimeCourseSimulation, Variable, Symbol)
+                                                  SteadyStateSimulation, UniformTimeCourseSimulation,
+                                                  Variable, Symbol)
 from biosimulators_utils.sedml.exec import exec_sed_doc
 from biosimulators_utils.utils.core import raise_errors_warnings
 import functools
@@ -89,7 +90,8 @@ def exec_sed_task(task, variables, log=None):
                           error_summary='Changes for model `{}` are not supported.'.format(model.id))
     raise_errors_warnings(*validation.validate_model_changes(task.model),
                           error_summary='Changes for model `{}` are invalid.'.format(model.id))
-    raise_errors_warnings(validation.validate_simulation_type(task.simulation, (UniformTimeCourseSimulation, )),
+    raise_errors_warnings(validation.validate_simulation_type(task.simulation,
+                                                              (UniformTimeCourseSimulation, SteadyStateSimulation)),
                           error_summary='{} `{}` is not supported.'.format(sim.__class__.__name__, sim.id))
     raise_errors_warnings(*validation.validate_simulation(task.simulation),
                           error_summary='Simulation `{}` is invalid.'.format(sim.id))
@@ -121,7 +123,7 @@ def exec_sed_task(task, variables, log=None):
     log.algorithm = alg_kisao_id
     log.simulator_details = {
         'method': method_name,
-        'arguments': make_args_string(method_args),
+        'arguments': method_args,
     }
 
     ############################

@@ -8,6 +8,7 @@
 
 from biosimulators_ginsim import __main__
 from biosimulators_ginsim import core
+from biosimulators_ginsim.data_model import KISAO_ALGORITHM_MAP
 from biosimulators_utils.combine import data_model as combine_data_model
 from biosimulators_utils.combine.io import CombineArchiveWriter
 from biosimulators_utils.config import get_config
@@ -225,31 +226,27 @@ class CliTestCase(unittest.TestCase):
             source='model.xml',
             language=sedml_data_model.ModelLanguage.SBML.value,
         ))
-        doc.simulations.append(sedml_data_model.UniformTimeCourseSimulation(
-            id='sim_time_course',
-            initial_time=0,
-            output_start_time=0,
-            output_end_time=10,
-            number_of_points=10,
-            algorithm=algorithm,
-        ))
+        if KISAO_ALGORITHM_MAP[algorithm.kisao_id]['simulation_type'] == sedml_data_model.UniformTimeCourseSimulation:
+            doc.simulations.append(sedml_data_model.UniformTimeCourseSimulation(
+                id='sim_time_course',
+                initial_time=0,
+                output_start_time=0,
+                output_end_time=10,
+                number_of_points=10,
+                algorithm=algorithm,
+            ))
+        else:
+            doc.simulations.append(sedml_data_model.SteadyStateSimulation(
+                id='sim_steady_state',
+                algorithm=algorithm,
+            ))
+
         doc.tasks.append(sedml_data_model.Task(
             id='task_1',
             model=doc.models[0],
             simulation=doc.simulations[0],
         ))
 
-        doc.data_generators.append(sedml_data_model.DataGenerator(
-            id='data_gen_time',
-            variables=[
-                sedml_data_model.Variable(
-                    id='var_time',
-                    symbol=sedml_data_model.Symbol.time,
-                    task=doc.tasks[0],
-                ),
-            ],
-            math='var_time',
-        ))
         doc.data_generators.append(sedml_data_model.DataGenerator(
             id='data_gen_G1',
             variables=[
@@ -278,11 +275,27 @@ class CliTestCase(unittest.TestCase):
         doc.outputs.append(sedml_data_model.Report(
             id='report',
             data_sets=[
-                sedml_data_model.DataSet(id='data_set_time', label='Time', data_generator=doc.data_generators[0]),
-                sedml_data_model.DataSet(id='data_set_G1', label='G1', data_generator=doc.data_generators[1]),
-                sedml_data_model.DataSet(id='data_set_G2', label='G2', data_generator=doc.data_generators[2]),
+                sedml_data_model.DataSet(id='data_set_G1', label='G1', data_generator=doc.data_generators[0]),
+                sedml_data_model.DataSet(id='data_set_G2', label='G2', data_generator=doc.data_generators[1]),
             ],
         ))
+        if isinstance(doc.simulations[0], sedml_data_model.UniformTimeCourseSimulation):
+            doc.data_generators.insert(
+                0,
+                sedml_data_model.DataGenerator(
+                    id='data_gen_time',
+                    variables=[
+                        sedml_data_model.Variable(
+                            id='var_time',
+                            symbol=sedml_data_model.Symbol.time,
+                            task=doc.tasks[0],
+                        ),
+                    ],
+                    math='var_time',
+                ))
+            doc.outputs[0].data_sets.insert(
+                0,
+                sedml_data_model.DataSet(id='data_set_time', label='Time', data_generator=doc.data_generators[0]))
 
         append_all_nested_children_to_doc(doc)
 
@@ -296,13 +309,18 @@ class CliTestCase(unittest.TestCase):
         self.assertEqual(sorted(report.keys()), sorted([d.id for d in doc.outputs[0].data_sets]))
 
         sim = doc.tasks[0].simulation
-        self.assertEqual(len(report[doc.outputs[0].data_sets[0].id]), sim.number_of_points + 1)
+        if isinstance(sim, sedml_data_model.UniformTimeCourseSimulation):
+            self.assertEqual(len(report[doc.outputs[0].data_sets[0].id]), sim.number_of_points + 1)
 
         for data_set_result in report.values():
             self.assertFalse(numpy.any(numpy.isnan(data_set_result)))
 
-        numpy.testing.assert_allclose(report[doc.outputs[0].data_sets[0].id],
-                                      numpy.linspace(sim.output_start_time, sim.output_end_time, sim.number_of_points + 1))
+        if isinstance(sim, sedml_data_model.UniformTimeCourseSimulation):
+            self.assertIn('data_set_time', report)
+            numpy.testing.assert_allclose(report[doc.outputs[0].data_sets[0].id],
+                                          numpy.linspace(sim.output_start_time, sim.output_end_time, sim.number_of_points + 1))
+        else:
+            self.assertNotIn('data_set_time', report)
 
     def test_exec_sedml_docs_in_combine_archive_with_all_algorithms(self):
         for alg in gen_algorithms_from_specs(self.SPECIFICATIONS_FILENAME).values():
