@@ -141,12 +141,6 @@
                 "id": "format_2585",
                 "version": null,
                 "supportedFeatures": []
-            },
-            {
-                "namespace": "EDAM",
-                "id": "format_9008",
-                "version": null,
-                "supportedFeatures": []
             }],
             "simulationFormats": [],
             "archiveFormats": [],
@@ -177,12 +171,6 @@
             "modelFormats": [{
                 "namespace": "EDAM",
                 "id": "format_2585",
-                "version": null,
-                "supportedFeatures": []
-            },
-            {
-                "namespace": "EDAM",
-                "id": "format_9008",
                 "version": null,
                 "supportedFeatures": []
             }],
