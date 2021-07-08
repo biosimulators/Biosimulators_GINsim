@@ -1,6 +1,6 @@
 from biosimulators_ginsim.data_model import UpdatePolicy
-from biosimulators_ginsim.utils import (validate_time_course, get_variable_target_xpath_ids,
-                                        read_model, set_up_simulation, get_trace_arg,
+from biosimulators_ginsim.utils import (validate_time_course, validate_simulation, get_variable_target_xpath_ids,
+                                        read_model, set_up_simulation, make_args_string,
                                         exec_simulation, get_variable_results)
 from biosimulators_utils.sedml.data_model import (ModelLanguage, UniformTimeCourseSimulation,
                                                   Algorithm, AlgorithmParameterChange,
@@ -9,6 +9,7 @@ from biosimulators_utils.warnings import BioSimulatorsWarning
 from kisao.exceptions import AlgorithmCannotBeSubstitutedException
 from kisao.warnings import AlgorithmSubstitutedWarning
 from unittest import mock
+import collections
 import numpy.testing
 import os
 import unittest
@@ -33,6 +34,13 @@ class UtilsTestCase(unittest.TestCase):
 
         sim = UniformTimeCourseSimulation(initial_time=0, output_start_time=0, output_end_time=100, number_of_points=101)
         self.assertNotEqual(validate_time_course(sim), ([], []))
+
+    def test_validate_simulation(self):
+        sim = UniformTimeCourseSimulation(initial_time=0, output_start_time=0, output_end_time=100, number_of_points=100)
+        self.assertEqual(validate_simulation(sim), ([], []))
+
+        sim = UniformTimeCourseSimulation(initial_time=0, output_start_time=0, output_end_time=100, number_of_points=101)
+        self.assertNotEqual(validate_simulation(sim), ([], []))
 
     def test_get_variable_target_xpath_ids(self):
         with mock.patch('lxml.etree.parse', return_value=None):
@@ -65,10 +73,10 @@ class UtilsTestCase(unittest.TestCase):
         simulation = UniformTimeCourseSimulation(
             output_end_time=100,
             algorithm=Algorithm(kisao_id='KISAO_0000449'))
-        kisao_id, max_steps, update_policy = set_up_simulation(simulation)
+        kisao_id, method, method_args = set_up_simulation(simulation)
         self.assertEqual(kisao_id, 'KISAO_0000449')
-        self.assertEqual(max_steps, 100)
-        self.assertEqual(update_policy, UpdatePolicy.synchronous)
+        self.assertEqual(method, 'trace')
+        self.assertEqual(method_args, {'m': 100, 'u': UpdatePolicy.synchronous.value})
 
         simulation.algorithm.kisao_id = 'KISAO_0000448'
         with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'NONE'}):
@@ -78,10 +86,10 @@ class UtilsTestCase(unittest.TestCase):
         simulation.algorithm.kisao_id = 'KISAO_0000448'
         with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'SIMILAR_VARIABLES'}):
             with self.assertWarns(AlgorithmSubstitutedWarning):
-                kisao_id, max_steps, update_policy = set_up_simulation(simulation)
+                kisao_id, method, method_args = set_up_simulation(simulation)
         self.assertEqual(kisao_id, 'KISAO_0000449')
-        self.assertEqual(max_steps, 100)
-        self.assertEqual(update_policy, UpdatePolicy.synchronous)
+        self.assertEqual(method, 'trace')
+        self.assertEqual(method_args, {'m': 100, 'u': UpdatePolicy.synchronous.value})
 
         simulation.algorithm.kisao_id = 'KISAO_0000449'
         simulation.algorithm.changes = [AlgorithmParameterChange()]
@@ -99,19 +107,21 @@ class UtilsTestCase(unittest.TestCase):
             with self.assertWarns(BioSimulatorsWarning):
                 set_up_simulation(simulation)
 
-    def test_get_trace_arg(self):
-        self.assertEqual(get_trace_arg(10, UpdatePolicy.synchronous), '-m 10 -u synchronous')
+    def test_make_args_string(self):
+        self.assertEqual(make_args_string(
+            collections.OrderedDict([('m', 10), ('u', UpdatePolicy.synchronous.value)])),
+            '-m 10 -u synchronous')
 
     def test_exec_simulation(self):
         filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'SuppMat_Model_Master_Model.zginml')
         model = read_model(filename)
-        raw_results = exec_simulation(model, 10, UpdatePolicy.synchronous)
+        raw_results = exec_simulation('trace', model, {'m': 10, 'u': UpdatePolicy.synchronous.value})
         self.assertLessEqual(len(raw_results), 10 + 1)
 
     def test_get_variable_results_sbml(self):
         filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'example-model.xml')
         model = read_model(filename)
-        raw_results = exec_simulation(model, 10, UpdatePolicy.synchronous)
+        raw_results = exec_simulation('trace', model, {'m': 10, 'u': UpdatePolicy.synchronous.value})
 
         namespaces = {
             'sbml': 'http://www.sbml.org/sbml/level3/version1/core',
@@ -168,7 +178,7 @@ class UtilsTestCase(unittest.TestCase):
     def test_get_variable_results_zginml(self):
         filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'SuppMat_Model_Master_Model.zginml')
         model = read_model(filename)
-        raw_results = exec_simulation(model, 10, UpdatePolicy.synchronous)
+        raw_results = exec_simulation('trace', model, {'m': 10, 'u': UpdatePolicy.synchronous.value})
 
         variables = [
             Variable(

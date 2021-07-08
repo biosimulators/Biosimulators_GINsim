@@ -200,6 +200,44 @@
             "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"],
             "dependencies": null,
             "citations": []
+        },
+        {
+            "id": "probabilistic",
+            "name": "time series with probabilistic state transitions",
+            "kisaoId": {
+                "namespace": "KISAO",
+                "id": "KISAO_0000573"
+            },
+            "modelingFrameworks": [{
+                "namespace": "SBO",
+                "id": "SBO_0000547"
+            }],
+            "modelFormats": [{
+                "namespace": "EDAM",
+                "id": "format_2585",
+                "version": null,
+                "supportedFeatures": []
+            },
+            {
+                "namespace": "EDAM",
+                "id": "format_9008",
+                "version": null,
+                "supportedFeatures": []
+            }],
+            "simulationFormats": [],
+            "archiveFormats": [],
+            "parameters": [],
+            "dependentDimensions": [{
+                "namespace": "SIO",
+                "id": "SIO_000418"
+            }],
+            "dependentVariableTargetPatterns": [{
+                "variables": "species levels",
+                "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
+            }],
+            "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"],
+            "dependencies": null,
+            "citations": []
         }
     ],
     "interfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"],

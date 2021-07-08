@@ -8,7 +8,8 @@
 
 from .data_model import KISAO_ALGORITHM_MAP, UpdatePolicy  # noqa: F401
 from biosimulators_utils.report.data_model import VariableResults
-from biosimulators_utils.sedml.data_model import ModelLanguage, UniformTimeCourseSimulation, Symbol  # noqa: F401
+from biosimulators_utils.sedml.data_model import (  # noqa: F401
+    ModelLanguage, Simulation, UniformTimeCourseSimulation, Symbol)
 from biosimulators_utils.simulator.utils import get_algorithm_substitution_policy
 from biosimulators_utils.warnings import warn, BioSimulatorsWarning
 from kisao.data_model import AlgorithmSubstitutionPolicy, ALGORITHM_SUBSTITUTION_POLICY_LEVELS
@@ -17,21 +18,44 @@ from ginsim.gateway import japi as ginsim_japi
 import biolqm  # noqa: F401
 import biosimulators_utils.sedml.validation
 import biosimulators_utils.xml.utils
-import collections
 import lxml.etree
 import numpy
 import os
 import py4j.java_gateway  # noqa: F401
 
 __all__ = [
+    'validate_simulation',
     'validate_time_course',
     'get_variable_target_xpath_ids',
     'read_model',
     'set_up_simulation',
-    'get_trace_arg',
+    'make_args_string',
     'exec_simulation',
     'get_variable_results',
 ]
+
+
+def validate_simulation(simulation):
+    """ Validate a simulation
+
+    Args:
+        simulation (:obj:`Simulation`): simulation
+
+    Returns:
+        :obj:`tuple`:
+
+            * nested :obj:`list` of :obj:`str`: nested list of errors (e.g., required ids missing or ids not unique)
+            * nested :obj:`list` of :obj:`str`: nested list of errors (e.g., required ids missing or ids not unique)
+    """
+    errors = []
+    warnings = []
+
+    if isinstance(simulation, UniformTimeCourseSimulation):
+        temp_errors, temp_warnings = validate_time_course(simulation)
+        errors.extend(temp_errors)
+        warnings.extend(temp_warnings)
+
+    return (errors, warnings)
 
 
 def validate_time_course(simulation):
@@ -127,28 +151,26 @@ def read_model(filename):
 
 
 def set_up_simulation(simulation):
-    """ Set up a simulation
+    """ Set up an analysis
 
     Args:
-        simulation (:obj:`UniformTimeCourseSimulation`): simulation
+        simulation (:obj:`Simulation`): analysis
 
     Returns:
         :obj:`tuple`:
 
             * :obj:`str`: KiSAO of algorithm to execute
-            * :obj:`int`: maximum number of steps to simulate
-            * :obj:`UpdatePolicy`: update policy
+            * :obj:`str`: name of the :obj:`biolqm` simulation/analysis method
+            * :obj:`dict`: arguments for simulation method
     """
-    # time course
-    max_steps = simulation.output_end_time
-
     # simulation algorithm
     alg_kisao_id = simulation.algorithm.kisao_id
     alg_substitution_policy = get_algorithm_substitution_policy()
     exec_kisao_id = get_preferred_substitute_algorithm_by_ids(
         alg_kisao_id, KISAO_ALGORITHM_MAP.keys(),
         substitution_policy=alg_substitution_policy)
-    update_policy = KISAO_ALGORITHM_MAP[exec_kisao_id]['update_policy']
+    method = KISAO_ALGORITHM_MAP[exec_kisao_id]['method']
+    method_args = KISAO_ALGORITHM_MAP[exec_kisao_id]['method_args'](simulation)
 
     # Apply the algorithm parameter changes specified by `simulation.algorithm.parameter_changes`
     if exec_kisao_id == alg_kisao_id:
@@ -165,39 +187,34 @@ def set_up_simulation(simulation):
             warn('Unsuported algorithm parameter `{}` was ignored.'.format(change.kisao_id), BioSimulatorsWarning)
 
     # return
-    return (exec_kisao_id, max_steps, update_policy)
+    return (exec_kisao_id, method, method_args)
 
 
-def get_trace_arg(max_steps, update_policy):
-    """ Set up the argument to :obj:`biolqm.trace`
+def make_args_string(args):
+    """ Set up the argument to methods such as :obj:`biolqm.trace`
 
     Args:
-        max_steps (:obj:`int`): maximum number of steps to simulation
-        update_policy (:obj:`UpdatePolicy`): update policy
+        args (:obj:`dict`): arguments to methods such as :obj:`biolqm.trace`
 
     Returns:
-        :obj:`str`: argument to :obj:`biolqm.trace`
+        :obj:`str`: argument to methods such as :obj:`biolqm.trace`
     """
-    args = collections.OrderedDict([
-        ('m', int(max_steps)),
-        ('u', update_policy.value),
-    ])
-    args_str = ' '.join('-{} {}'.format(arg, val) for arg, val in args.items())
-    return args_str
+    return ' '.join('-{} {}'.format(arg, val) for arg, val in args.items())
 
 
-def exec_simulation(model, max_steps, update_policy):
-    """ Execute a simulation
+def exec_simulation(method_name, model, args):
+    """ Execute a task
 
     Args:
+        method_name (:obj:`str`): name of the :obj:`biolqm` simulation/analysis method
         model (:obj:`py4j.java_gateway.JavaObject`): model
-        max_steps (:obj:`int`): maximum number of steps to simulation
-        update_policy (:obj:`UpdatePolicy`): update policy
+        args (:obj:`str`): argument to :obj:`method`
 
     Returns:
-        :obj:`list` of :obj:`dict`: predicted states
+        :obj:`list` of :obj:`dict`: result of :obj:`method` for :obj:`model` and :obj:`args`
     """
-    return list(biolqm.trace(model, get_trace_arg(max_steps, update_policy)))
+    method = getattr(biolqm, method_name)
+    return list(method(model, make_args_string(args)))
 
 
 def get_variable_results(variables, model_language, target_xpath_ids, simulation, raw_results):
@@ -208,7 +225,7 @@ def get_variable_results(variables, model_language, target_xpath_ids, simulation
         model_language (:obj:`str`): model language
         target_xpath_ids (:obj:`dict`): dictionary that maps XPaths to the SBML qualitative ids
             of the corresponding objects
-        simulation (:obj:`UniformTimeCourseSimulation`): simulation
+        simulation (:obj:`Simulation`): simulation
         raw_results (:obj:`list` of :obj:`dict`): predicted simulatioin states
 
     Returns:

@@ -6,8 +6,8 @@
 :License: MIT
 """
 
-from .utils import (validate_time_course, get_variable_target_xpath_ids,
-                    read_model, set_up_simulation, get_trace_arg, exec_simulation, get_variable_results)
+from .utils import (validate_simulation, get_variable_target_xpath_ids,
+                    read_model, set_up_simulation, make_args_string, exec_simulation, get_variable_results)
 from biosimulators_utils.combine.exec import exec_sedml_docs_in_archive
 from biosimulators_utils.log.data_model import CombineArchiveLog, TaskLog  # noqa: F401
 from biosimulators_utils.plot.data_model import PlotFormat  # noqa: F401
@@ -93,7 +93,7 @@ def exec_sed_task(task, variables, log=None):
                           error_summary='{} `{}` is not supported.'.format(sim.__class__.__name__, sim.id))
     raise_errors_warnings(*validation.validate_simulation(task.simulation),
                           error_summary='Simulation `{}` is invalid.'.format(sim.id))
-    raise_errors_warnings(*validate_time_course(task.simulation),
+    raise_errors_warnings(*validate_simulation(task.simulation),
                           error_summary='Simulation `{}` is invalid.'.format(sim.id))
     if model.language == ModelLanguage.SBML.value:
         target_xpath_ids = get_variable_target_xpath_ids(variables, task.model.source)
@@ -109,10 +109,10 @@ def exec_sed_task(task, variables, log=None):
     biolqm_model = read_model(model.source)
 
     # setup simulation
-    alg_kisao_id, max_steps, update_policy = set_up_simulation(sim)
+    alg_kisao_id, method_name, method_args = set_up_simulation(sim)
 
     # run simulation
-    raw_results = exec_simulation(biolqm_model, max_steps, update_policy)
+    raw_results = exec_simulation(method_name, biolqm_model, method_args)
 
     # transform results
     variable_results = get_variable_results(variables, model.language, target_xpath_ids, sim, raw_results)
@@ -120,8 +120,8 @@ def exec_sed_task(task, variables, log=None):
     # log action
     log.algorithm = alg_kisao_id
     log.simulator_details = {
-        'method': 'biolqm.trace',
-        'arguments': get_trace_arg(max_steps, update_policy),
+        'method': method_name,
+        'arguments': make_args_string(method_args),
     }
 
     ############################
