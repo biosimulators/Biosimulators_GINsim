@@ -17,3 +17,7 @@ class DataModelTestCase(unittest.TestCase):
             alg_props = KISAO_ALGORITHM_MAP[alg_specs['kisaoId']['id']]
             self.assertEqual(set(alg_props['parameters'].keys()),
                              set(param_specs['kisaoId']['id'] for param_specs in alg_specs['parameters']))
+
+            for param_specs in alg_specs['parameters']:
+                param_props = alg_props['parameters'][param_specs['kisaoId']['id']]
+                self.assertEqual(param_props['type'].value, param_specs['type'])

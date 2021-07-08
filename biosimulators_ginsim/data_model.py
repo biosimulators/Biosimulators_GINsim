@@ -6,6 +6,7 @@
 :License: MIT
 """
 
+from biosimulators_utils.data_model import ValueType
 from biosimulators_utils.sedml.data_model import SteadyStateSimulation, UniformTimeCourseSimulation
 import collections
 import enum
@@ -30,8 +31,10 @@ KISAO_ALGORITHM_MAP = collections.OrderedDict([
         'name': 'synchronous logical simulation',
         'simulation_type': UniformTimeCourseSimulation,
         'method': 'trace',
-        'method_args': lambda simulation:
-            '-m {:d} -u {}'.format(int(simulation.output_end_time), UpdatePolicy.synchronous.value),
+        'method_args': lambda simulation: [
+            '-m {:d}'.format(int(simulation.output_end_time)),
+            '-u {}'.format(UpdatePolicy.synchronous.value),
+        ],
         'parameters': {},
     }),
     ('KISAO_0000657', {
@@ -39,8 +42,10 @@ KISAO_ALGORITHM_MAP = collections.OrderedDict([
         'name': 'sequential logical simulation',
         'simulation_type': UniformTimeCourseSimulation,
         'method': 'trace',
-        'method_args': lambda simulation:
-            '-m {:d} -u {}'.format(int(simulation.output_end_time), UpdatePolicy.sequential.value),
+        'method_args': lambda simulation: [
+            '-m {:d}'.format(int(simulation.output_end_time)),
+            '-u {}'.format(UpdatePolicy.sequential.value),
+        ],
         'parameters': {},
     }),
     ('KISAO_0000450', {
@@ -48,8 +53,10 @@ KISAO_ALGORITHM_MAP = collections.OrderedDict([
         'name': 'asynchronous logical simulation',
         'simulation_type': UniformTimeCourseSimulation,
         'method': 'random',
-        'method_args': lambda simulation:
-            '-m {:d} -u {}'.format(int(simulation.output_end_time), UpdatePolicy.asynchronous.value),
+        'method_args': lambda simulation: [
+            '-m {:d}'.format(int(simulation.output_end_time)),
+            '-u {}'.format(UpdatePolicy.asynchronous.value),
+        ],
         'parameters': {},
     }),
     ('KISAO_0000573', {
@@ -57,8 +64,10 @@ KISAO_ALGORITHM_MAP = collections.OrderedDict([
         'name': 'complete logical simulation',
         'simulation_type': UniformTimeCourseSimulation,
         'method': 'random',
-        'method_args': lambda simulation:
-            '-m {:d} -u {}'.format(int(simulation.output_end_time), UpdatePolicy.complete.value),
+        'method_args': lambda simulation: [
+            '-m {:d}'.format(int(simulation.output_end_time)),
+            '-u {}'.format(UpdatePolicy.complete.value),
+        ],
         'parameters': {},
     }),
     ('KISAO_0000659', {
@@ -66,7 +75,7 @@ KISAO_ALGORITHM_MAP = collections.OrderedDict([
         'name': 'Naldi MDD stable state search method',
         'simulation_type': SteadyStateSimulation,
         'method': 'fixpoints',
-        'method_args': lambda simulation: collections.OrderedDict([]),
+        'method_args': lambda simulation: [],
         'parameters': {},
     }),
     ('KISAO_0000662', {
@@ -74,15 +83,65 @@ KISAO_ALGORITHM_MAP = collections.OrderedDict([
         'name': 'Klarner ASP trap space identification method',
         'simulation_type': SteadyStateSimulation,
         'method': 'trapspaces',
-        'method_args': lambda simulation: None,
-        'parameters': {},  # TODO: options: all, reduce, terminal, tree
+        'method_args': lambda simulation: [],
+        'parameters': {
+            'KISAO_0000216': {
+                'kisao_id': 'KISAO_0000216',
+                'name': 'use reduced model',
+                'method_args': lambda value: ['reduced'] if value else [],
+                'type': ValueType.boolean,
+            },
+            # 'KISAO_0000XXX': {
+            #    'kisao_id': 'KISAO_0000XXX',
+            #    'name': 'get all trapped variables',
+            #    'method_args': lambda value: ['all'] if value else [],
+            #    'type': ValueType.boolean,
+            # },
+            # 'KISAO_0000XXX': {
+            #    'kisao_id': 'KISAO_0000XXX',
+            #    'name': 'only get terminal trap spaces',
+            #    'method_args': lambda value: ['terminal'] if value else [],
+            #    'type': ValueType.boolean,
+            # },
+            # 'KISAO_0000XXX': {
+            #    'kisao_id': 'KISAO_0000XXX',
+            #    'name': 'get trap space hierarchy',
+            #    'method_args': lambda value: ['tree'] if value else [],
+            #    'type': ValueType.boolean,
+            # },
+        },
     }),
     ('KISAO_0000663', {
         'kisao_id': 'KISAO_0000663',
         'name': 'BDD trap space identification method',
         'simulation_type': SteadyStateSimulation,
         'method': 'trapspaces',
-        'method_args': lambda simulation: 'BDD',
-        'parameters': {},  # TODO: options: all, reduce, terminal, tree
+        'method_args': lambda simulation: ['BDD'],
+        'parameters': {
+            'KISAO_0000216': {
+                'kisao_id': 'KISAO_0000216',
+                'name': 'use reduced model',
+                'method_args': lambda value: ['reduced'] if value else [],
+                'type': ValueType.boolean,
+            },
+            # 'KISAO_0000XXX': {
+            #    'kisao_id': 'KISAO_0000XXX',
+            #    'name': 'get all trapped variables',
+            #    'method_args': lambda value: ['all'] if value else [],
+            #    'type': ValueType.boolean,
+            # },
+            # 'KISAO_0000XXX': {
+            #    'kisao_id': 'KISAO_0000XXX',
+            #    'name': 'only get terminal trap spaces',
+            #    'method_args': lambda value: ['terminal'] if value else [],
+            #    'type': ValueType.boolean,
+            # },
+            # 'KISAO_0000XXX': {
+            #    'kisao_id': 'KISAO_0000XXX',
+            #    'name': 'get trap space hierarchy',
+            #    'method_args': lambda value: ['tree'] if value else [],
+            #    'type': ValueType.boolean,
+            # },
+        },
     }),
 ])

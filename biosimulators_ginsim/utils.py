@@ -11,6 +11,7 @@ from biosimulators_utils.report.data_model import VariableResults
 from biosimulators_utils.sedml.data_model import (  # noqa: F401
     ModelLanguage, Simulation, UniformTimeCourseSimulation, Symbol)
 from biosimulators_utils.simulator.utils import get_algorithm_substitution_policy
+from biosimulators_utils.utils.core import validate_str_value, parse_value
 from biosimulators_utils.warnings import warn, BioSimulatorsWarning
 from kisao.data_model import AlgorithmSubstitutionPolicy, ALGORITHM_SUBSTITUTION_POLICY_LEVELS
 from kisao.utils import get_preferred_substitute_algorithm_by_ids
@@ -160,7 +161,7 @@ def set_up_simulation(simulation):
 
             * :obj:`str`: KiSAO of algorithm to execute
             * :obj:`str`: name of the :obj:`biolqm` simulation/analysis method
-            * :obj:`str`: arguments for simulation method
+            * :obj:`list` of :obj:`str`: arguments for simulation method
     """
     # simulation algorithm
     alg_kisao_id = simulation.algorithm.kisao_id
@@ -179,13 +180,33 @@ def set_up_simulation(simulation):
     # Apply the algorithm parameter changes specified by `simulation.algorithm.parameter_changes`
     if exec_kisao_id == alg_kisao_id:
         for change in simulation.algorithm.changes:
-            if (
-                ALGORITHM_SUBSTITUTION_POLICY_LEVELS[alg_substitution_policy]
-                > ALGORITHM_SUBSTITUTION_POLICY_LEVELS[AlgorithmSubstitutionPolicy.NONE]
-            ):
-                warn('Unsuported algorithm parameter `{}` was ignored.'.format(change.kisao_id), BioSimulatorsWarning)
+            param_props = alg_props['parameters'].get(change.kisao_id, None)
+
+            if param_props is None:
+                if (
+                    ALGORITHM_SUBSTITUTION_POLICY_LEVELS[alg_substitution_policy]
+                    > ALGORITHM_SUBSTITUTION_POLICY_LEVELS[AlgorithmSubstitutionPolicy.NONE]
+                ):
+                    warn('Unsuported algorithm parameter `{}` was ignored.'.format(change.kisao_id), BioSimulatorsWarning)
+                else:
+                    raise NotImplementedError('Algorithm parameter `{}` is not supported.'.format(change.kisao_id))
             else:
-                raise NotImplementedError('Algorithm parameter `{}` is not supported.'.format(change.kisao_id))
+                if validate_str_value(change.new_value, param_props['type']):
+                    parsed_value = parse_value(change.new_value, param_props['type'])
+                    method_args.extend(param_props['method_args'](parsed_value))
+
+                else:
+                    if (
+                        ALGORITHM_SUBSTITUTION_POLICY_LEVELS[alg_substitution_policy]
+                        > ALGORITHM_SUBSTITUTION_POLICY_LEVELS[AlgorithmSubstitutionPolicy.NONE]
+                    ):
+                        msg = 'Unsuported algorithm parameter value `{}` of `{}` was ignored. The value must be a {}.'.format(
+                            change.new_value, change.kisao_id, param_props['type'].value)
+                        warn(msg, BioSimulatorsWarning)
+                    else:
+                        msg = '`{}` is not a valid value of algorithm parameter `{}`. The value must be a {}.'.format(
+                            change.new_value, change.kisao_id, param_props['type'].value)
+                        raise ValueError(msg)
     else:
         for change in simulation.algorithm.changes:
             warn('Unsuported algorithm parameter `{}` was ignored.'.format(change.kisao_id), BioSimulatorsWarning)
@@ -200,14 +221,14 @@ def exec_simulation(method_name, model, args=None):
     Args:
         method_name (:obj:`str`): name of the :obj:`biolqm` simulation/analysis method
         model (:obj:`py4j.java_gateway.JavaObject`): model
-        args (:obj:`str`, optional): argument to :obj:`method`
+        args (:obj:`list` of :obj:`str`, optional): argument to :obj:`method`
 
     Returns:
         :obj:`list` of :obj:`dict`: result of :obj:`method` for :obj:`model` and :obj:`args`
     """
     method = getattr(biolqm, method_name)
     if args:
-        args_list = [args]
+        args_list = [' '.join(args)]
     else:
         args_list = []
     result = method(model, *args_list)
