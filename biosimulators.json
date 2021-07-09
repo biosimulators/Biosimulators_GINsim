@@ -415,7 +415,7 @@
                 },
                 "name": "use reduced model",
                 "type": "boolean",
-                "value": "true",
+                "value": "false",
                 "recommendedRange": null,
                 "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"]
             }],
@@ -474,7 +474,7 @@
                 },
                 "name": "use reduced model",
                 "type": "boolean",
-                "value": "true",
+                "value": "false",
                 "recommendedRange": null,
                 "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"]
             }],
