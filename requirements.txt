@@ -1,4 +1,4 @@
-biosimulators_utils[logging,sbml] >= 0.1.92
+biosimulators_utils[logging,sbml] >= 0.1.95
 ginsim
 kisao >= 2.20
 lxml
