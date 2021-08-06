@@ -53,7 +53,7 @@ For example, the following command could be used to execute the simulations desc
 
 .. code-block:: text
 
-    ginsim -i ./modeling-study.omex -o ./
+    biosimulators-ginsim -i ./modeling-study.omex -o ./
 
 
 Docker image with a command-line entrypoint
