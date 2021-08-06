@@ -6,8 +6,14 @@ ARG SIMULATOR_VERSION=3.0.0b
 
 # metadata
 LABEL \
+    org.opencontainers.image.title="GINsim" \
+    org.opencontainers.image.version="${SIMULATOR_VERSION}" \
+    org.opencontainers.image.description="Tool for modeling and simulating genetic regulatory networks." \
+    org.opencontainers.image.url="http://ginsim.org/" \
+    org.opencontainers.image.documentation="http://doc.ginsim.org/" \
     org.opencontainers.image.authors="BioSimulators Team <info@biosimulators.org>" \
     org.opencontainers.image.vendor="BioSimulators Team" \
+    org.opencontainers.image.licenses="SPDX:GPL-3.0-only" \
     \
     base_image="python:3.9-slim-buster" \
     version="${VERSION}" \
