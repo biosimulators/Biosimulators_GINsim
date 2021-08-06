@@ -51,7 +51,7 @@ coverage html
 
 ## Documentation convention
 
-BioSimulators-BooolNet is documented using [reStructuredText](https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html) and the [napoleon Sphinx plugin](https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html). The documentation can be compiled by running the following commands:
+BioSimulators-GINsim is documented using [reStructuredText](https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html) and the [napoleon Sphinx plugin](https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html). The documentation can be compiled by running the following commands:
 
 ```
 python -m pip install -r docs-src/requirements.txt
