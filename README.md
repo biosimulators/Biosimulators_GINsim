@@ -33,7 +33,7 @@ docker pull ghcr.io/biosimulators/ginsim
 ```
 usage: ginsim [-h] [-d] [-q] -i ARCHIVE [-o OUT_DIR] [-v]
 
-BioSimulators-compliant command-line interface to the GINsim simulation program <https://sysbio.uni-ulm.de/?Software:GINsim>.
+BioSimulators-compliant command-line interface to the GINsim simulation program <http://ginsim.org/>.
 
 optional arguments:
   -h, --help            show this help message and exit

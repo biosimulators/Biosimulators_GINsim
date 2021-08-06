@@ -36,7 +36,7 @@ The command-line program can be used to execute COMBINE/OMEX archives that descr
 
     usage: ginsim [-h] [-d] [-q] -i ARCHIVE [-o OUT_DIR] [-v]
 
-    BioSimulators-compliant command-line interface to the GINsim <https://sysbio.uni-ulm.de/?Software:GINsim> simulation program.
+    BioSimulators-compliant command-line interface to the GINsim <http://ginsim.org/> simulation program.
 
     optional arguments:
       -h, --help            show this help message and exit
