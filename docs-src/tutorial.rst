@@ -34,7 +34,7 @@ The command-line program can be used to execute COMBINE/OMEX archives that descr
 
 .. code-block:: text
 
-    usage: ginsim [-h] [-d] [-q] -i ARCHIVE [-o OUT_DIR] [-v]
+    usage: biosimulators-ginsim [-h] [-d] [-q] -i ARCHIVE [-o OUT_DIR] [-v]
 
     BioSimulators-compliant command-line interface to the GINsim <http://ginsim.org/> simulation program.
 
