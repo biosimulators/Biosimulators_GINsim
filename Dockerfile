@@ -31,7 +31,7 @@ LABEL \
 RUN mkdir /usr/share/man/man1/ \
     && apt-get update -y \
     && apt-get install -y --no-install-recommends \
-        default-jre-headless \
+        default-jre \
         wget \
     \
     && cd /tmp \
