@@ -7,12 +7,13 @@
 :License: MIT
 """
 
+from . import get_simulator_version
 from ._version import __version__
 from .core import exec_sedml_docs_in_combine_archive
 from biosimulators_utils.simulator.cli import build_cli
 
 App = build_cli('biosimulators-ginsim', __version__,
-                'GINsim', '3.0.0b', 'http://ginsim.org',
+                'GINsim', get_simulator_version(), 'http://ginsim.org',
                 exec_sedml_docs_in_combine_archive)
 
 
