@@ -194,7 +194,7 @@
                     "namespace": "EDAM",
                     "id": "format_2585",
                     "version": null,
-                    "supportedFeatures": []
+                    "supportedFeatures": ["qual"]
                 },
                 {
                     "namespace": "EDAM",
@@ -243,7 +243,7 @@
                     "namespace": "EDAM",
                     "id": "format_2585",
                     "version": null,
-                    "supportedFeatures": []
+                    "supportedFeatures": ["qual"]
                 },
                 {
                     "namespace": "EDAM",
@@ -292,7 +292,7 @@
                     "namespace": "EDAM",
                     "id": "format_2585",
                     "version": null,
-                    "supportedFeatures": []
+                    "supportedFeatures": ["qual"]
                 },
                 {
                     "namespace": "EDAM",
@@ -341,7 +341,7 @@
                     "namespace": "EDAM",
                     "id": "format_2585",
                     "version": null,
-                    "supportedFeatures": []
+                    "supportedFeatures": ["qual"]
                 },
                 {
                     "namespace": "EDAM",
@@ -390,7 +390,7 @@
                     "namespace": "EDAM",
                     "id": "format_2585",
                     "version": null,
-                    "supportedFeatures": []
+                    "supportedFeatures": ["qual"]
                 },
                 {
                     "namespace": "EDAM",
@@ -447,7 +447,7 @@
                     "namespace": "EDAM",
                     "id": "format_2585",
                     "version": null,
-                    "supportedFeatures": []
+                    "supportedFeatures": ["qual"]
                 },
                 {
                     "namespace": "EDAM",
@@ -516,7 +516,7 @@
                     "namespace": "EDAM",
                     "id": "format_2585",
                     "version": null,
-                    "supportedFeatures": []
+                    "supportedFeatures": ["qual"]
                 },
                 {
                     "namespace": "EDAM",
