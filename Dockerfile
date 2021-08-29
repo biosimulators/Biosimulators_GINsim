@@ -1,7 +1,7 @@
 # Base OS
 FROM python:3.9-slim-buster
 
-ARG VERSION="0.0.4"
+ARG VERSION="0.0.5"
 ARG SIMULATOR_VERSION=3.0.0b
 
 # metadata
@@ -28,8 +28,7 @@ LABEL \
     maintainer="BioSimulators Team <info@biosimulators.org>"
 
 # Install GINsim
-RUN mkdir -p /usr/share/man/man1/ \
-    && apt-get update -y \
+RUN apt-get update -y \
     && apt-get install -y --no-install-recommends \
         default-jre \
         wget \
@@ -44,12 +43,16 @@ RUN mkdir -p /usr/share/man/man1/ \
         wget \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
-ENV PATH=/usr/local/share/colomoto/bin:$PATH
 
 # Copy code for command-line interface into image and install it
 COPY . /root/Biosimulators_GINsim
 RUN pip install /root/Biosimulators_GINsim \
     && rm -rf /root/Biosimulators_GINsim
+RUN mkdir -p /.config/matplotlib \
+    && mkdir -p /.cache/matplotlib \
+    && chmod ugo+rw /.config/matplotlib \
+    && chmod ugo+rw /.cache/matplotlib \
+    && python -c "import matplotlib.font_manager"
 ENV VERBOSE=0 \
     MPLBACKEND=PDF
 
