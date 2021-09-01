@@ -7,6 +7,7 @@
 """
 
 from .data_model import KISAO_ALGORITHM_MAP, UpdatePolicy  # noqa: F401
+from biosimulators_utils.config import Config  # noqa: F401
 from biosimulators_utils.report.data_model import VariableResults
 from biosimulators_utils.sedml.data_model import (  # noqa: F401
     ModelLanguage, Simulation, UniformTimeCourseSimulation, Symbol)
@@ -150,11 +151,12 @@ def read_model(filename):
     return model
 
 
-def set_up_simulation(simulation):
+def set_up_simulation(simulation, config=None):
     """ Set up an analysis
 
     Args:
         simulation (:obj:`Simulation`): analysis
+        config (:obj:`Config`, optional): configuration
 
     Returns:
         :obj:`tuple`:
@@ -165,7 +167,7 @@ def set_up_simulation(simulation):
     """
     # simulation algorithm
     alg_kisao_id = simulation.algorithm.kisao_id
-    alg_substitution_policy = get_algorithm_substitution_policy()
+    alg_substitution_policy = get_algorithm_substitution_policy(config=config)
     exec_kisao_id = get_preferred_substitute_algorithm_by_ids(
         alg_kisao_id, KISAO_ALGORITHM_MAP.keys(),
         substitution_policy=alg_substitution_policy)

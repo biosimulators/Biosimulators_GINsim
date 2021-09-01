@@ -1,7 +1,7 @@
 # Base OS
 FROM python:3.9-slim-buster
 
-ARG VERSION="0.0.5"
+ARG VERSION="0.0.6"
 ARG SIMULATOR_VERSION=3.0.0b
 
 # metadata
@@ -26,6 +26,11 @@ LABEL \
     about.license="SPDX:GPL-3.0-only" \
     about.tags="BioSimulators,mathematical model,logical model,simulation,systems biology,computational biology,SBML,SED-ML,COMBINE,OMEX" \
     maintainer="BioSimulators Team <info@biosimulators.org>"
+
+# fonts for matplotlib
+RUN apt-get update -y \
+    && apt-get install -y --no-install-recommends libfreetype6 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install GINsim
 RUN apt-get update -y \

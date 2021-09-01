@@ -17,6 +17,10 @@
         },
         "operatingSystemType": "Linux"
     },
+    "pythonApi": {
+      "package": "biosimulators-ginsim",
+      "module": "biosimulators_ginsim"
+    },
     "authors": [{
             "firstName": "Aurélien",
             "lastName": "Naldi",
@@ -104,7 +108,12 @@
                 "namespace": "biotools",
                 "id": "ginsim",
                 "url": "https://bio.tools/ginsim"
-            }
+            },
+            {
+                "namespace": "pypi",
+                "id": "biosimulators-ginsim",
+                "url": "https://pypi.org/project/biosimulators-ginsim/"
+          }
         ],
         "citations": [{
                 "title": "Logical modeling and analysis of cellular regulatory networks With GINsim 3.0",
