@@ -11,6 +11,7 @@ from kisao.exceptions import AlgorithmCannotBeSubstitutedException
 from kisao.warnings import AlgorithmSubstitutedWarning
 from unittest import mock
 import collections
+import lxml.etree
 import numpy.testing
 import os
 import unittest
@@ -46,29 +47,29 @@ class UtilsTestCase(unittest.TestCase):
     def test_get_variable_target_xpath_ids(self):
         with mock.patch('lxml.etree.parse', return_value=None):
             with mock.patch('biosimulators_utils.xml.utils.get_namespaces_for_xml_doc', return_value={'qual': None}):
-                with mock.patch('biosimulators_utils.sedml.validation.validate_variable_xpaths', return_value={'x': 'X'}):
+                with mock.patch('biosimulators_utils.sedml.validation.validate_target_xpaths', return_value={'x': 'X'}):
                     self.assertEqual(get_variable_target_xpath_ids([Variable(target='x')], None), {'x': 'X'})
 
     def test_read_model(self):
         filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'SuppMat_Model_Master_Model.zginml')
-        read_model(filename)
+        read_model(filename, ModelLanguage.ZGINML)
 
         filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'example-model.sbml')
-        read_model(filename)
+        read_model(filename, ModelLanguage.SBML)
 
         filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'example-model.xml')
-        read_model(filename)
+        read_model(filename, ModelLanguage.SBML)
 
         with self.assertRaises(FileNotFoundError):
-            read_model('not a file')
+            read_model('not a file', ModelLanguage.SBML)
 
         filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'invalid.zginml')
         with self.assertRaises(ValueError):
-            read_model(filename)
+            read_model(filename, ModelLanguage.ZGINML)
 
         filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'regulatoryGraph.ginml')
         with self.assertRaises(ValueError):
-            read_model(filename)
+            read_model(filename, ModelLanguage.GINML)
 
     def test_set_up_simulation(self):
         simulation = UniformTimeCourseSimulation(
@@ -158,7 +159,7 @@ class UtilsTestCase(unittest.TestCase):
 
     def test_exec_simulation(self):
         filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'SuppMat_Model_Master_Model.zginml')
-        model = read_model(filename)
+        model = read_model(filename, ModelLanguage.ZGINML)
         raw_results = exec_simulation('trace', model, ['-m 10', '-u {}'.format(UpdatePolicy.synchronous.value)])
         self.assertLessEqual(len(raw_results), 10 + 1)
 
@@ -167,7 +168,7 @@ class UtilsTestCase(unittest.TestCase):
 
     def test_get_variable_results_sbml(self):
         filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'example-model.xml')
-        model = read_model(filename)
+        model = read_model(filename, ModelLanguage.SBML)
         raw_results = exec_simulation('trace', model, ['-m 10', '-u {}'.format(UpdatePolicy.synchronous.value)])
 
         namespaces = {
@@ -191,7 +192,7 @@ class UtilsTestCase(unittest.TestCase):
             ),
         ]
         model_language = ModelLanguage.SBML
-        target_xpath_ids = get_variable_target_xpath_ids(variables, filename)
+        target_xpath_ids = get_variable_target_xpath_ids(variables, lxml.etree.parse(filename))
         simulation = UniformTimeCourseSimulation(
             initial_time=0,
             output_start_time=0,
@@ -224,7 +225,7 @@ class UtilsTestCase(unittest.TestCase):
 
     def test_get_variable_results_zginml(self):
         filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'SuppMat_Model_Master_Model.zginml')
-        model = read_model(filename)
+        model = read_model(filename, ModelLanguage.ZGINML)
         raw_results = exec_simulation('trace', model, ['-m 10', '-u {}'.format(UpdatePolicy.synchronous.value)])
 
         variables = [

@@ -20,7 +20,7 @@ from ginsim.gateway import japi as ginsim_japi
 import biolqm  # noqa: F401
 import biosimulators_utils.sedml.validation
 import biosimulators_utils.xml.utils
-import lxml.etree
+import lxml.etree  # noqa: F401
 import numpy
 import os
 import py4j.java_gateway  # noqa: F401
@@ -97,22 +97,22 @@ def validate_time_course(simulation):
     return (errors, warnings)
 
 
-def get_variable_target_xpath_ids(variables, model_source):
+def get_variable_target_xpath_ids(variables, model_etree):
     """ Get the SBML-qual id for each XML XPath target of a SED-ML variable
 
     Args:
         variables (:obj:`list` of :obj:`Variable`): variables of data generators
-        model_source (:obj:`str`): path to model
+        model_etree (:obj:`lxml.etree._ElementTree`): element tree for model
 
     Returns:
         :obj:`dict`: dictionary that maps each variable target to the id of the
             corresponding qualitative species
     """
-    namespaces = biosimulators_utils.xml.utils.get_namespaces_for_xml_doc(lxml.etree.parse(model_source))
+    namespaces = biosimulators_utils.xml.utils.get_namespaces_for_xml_doc(model_etree)
 
-    return biosimulators_utils.sedml.validation.validate_variable_xpaths(
+    return biosimulators_utils.sedml.validation.validate_target_xpaths(
         variables,
-        model_source,
+        model_etree,
         attr={
             'namespace': {
                 'prefix': 'qual',
@@ -123,25 +123,22 @@ def get_variable_target_xpath_ids(variables, model_source):
     )
 
 
-def read_model(filename):
+def read_model(filename, language):
     """ Read a model
 
     Args:
-        filename (:obj:`str`): path to model
+        language (:obj:`ModelLanguage`): language
 
     Returns:
         :obj:`py4j.java_gateway.JavaObject`: model
     """
+    if language == ModelLanguage.SBML:
+        format = 'sbml'
+    else:
+        format = None
+
     if not os.path.isfile(filename):
         raise FileNotFoundError('`{}` is not a file.'.format(filename))
-
-    format = None
-    try:
-        root = lxml.etree.parse(filename).getroot()
-        if root.tag.startswith('{http://www.sbml.org/sbml/'):
-            format = 'sbml'
-    except lxml.etree.XMLSyntaxError:
-        pass  # pragma: no cover
 
     model = ginsim_japi.lqm.load(filename, format)
 
