@@ -19,7 +19,8 @@
     },
     "pythonApi": {
       "package": "biosimulators-ginsim",
-      "module": "biosimulators_ginsim"
+      "module": "biosimulators_ginsim",
+      "installationInstructions": "https://docs.biosimulators.org/Biosimulators_GINsim/installation.html"
     },
     "authors": [{
             "firstName": "Aurélien",
