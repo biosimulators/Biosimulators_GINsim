@@ -213,12 +213,47 @@
                     "supportedFeatures": []
                 }
             ],
+            "modelChangePatterns": [
+        {
+          "name": "Change component attributes",
+          "types": ["SedAttributeModelChange", "SedComputeAttributeChangeModelChange", "SedSetValueAttributeModelChange"],
+          "target": {
+            "value": "//*/@*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Add components",
+          "types": ["SedAddXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Remove components",
+          "types": ["SedRemoveXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Change components",
+          "types": ["SedChangeXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        }        
+      ],
             "simulationFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3685",
                 "version": "L1V3",
                 "supportedFeatures": []
             }],
+            "simulationTypes": ["SedUniformTimeCourseSimulation"],
             "archiveFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3686",
@@ -226,13 +261,21 @@
                 "supportedFeatures": []
             }],
             "parameters": [],
-            "dependentDimensions": [{
+            "outputDimensions": [{
                 "namespace": "SIO",
                 "id": "SIO_000418"
             }],
-            "dependentVariableTargetPatterns": [{
-                "variables": "species levels",
-                "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
+            "outputVariablePatterns": [
+                {
+                  "name": "step",
+                  "symbol": {
+                    "value": "time",
+                    "namespace": "urn:sedml:symbol"
+                  }
+                },
+                {
+                "name": "species levels",
+                "target": {"value": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies", "grammar": "XPath"}
             }],
             "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"],
             "dependencies": null,
@@ -262,12 +305,47 @@
                     "supportedFeatures": []
                 }
             ],
+            "modelChangePatterns": [
+        {
+          "name": "Change component attributes",
+          "types": ["SedAttributeModelChange", "SedComputeAttributeChangeModelChange", "SedSetValueAttributeModelChange"],
+          "target": {
+            "value": "//*/@*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Add components",
+          "types": ["SedAddXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Remove components",
+          "types": ["SedRemoveXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Change components",
+          "types": ["SedChangeXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        }        
+      ],
             "simulationFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3685",
                 "version": "L1V3",
                 "supportedFeatures": []
             }],
+            "simulationTypes": ["SedUniformTimeCourseSimulation"],
             "archiveFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3686",
@@ -275,13 +353,21 @@
                 "supportedFeatures": []
             }],
             "parameters": [],
-            "dependentDimensions": [{
+            "outputDimensions": [{
                 "namespace": "SIO",
                 "id": "SIO_000418"
             }],
-            "dependentVariableTargetPatterns": [{
-                "variables": "species levels",
-                "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
+            "outputVariablePatterns": [
+                {
+                  "name": "step",
+                  "symbol": {
+                    "value": "time",
+                    "namespace": "urn:sedml:symbol"
+                  }
+                },
+                {
+                "name": "species levels",
+                "target": {"value": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies", "grammar": "XPath"}
             }],
             "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"],
             "dependencies": null,
@@ -311,12 +397,47 @@
                     "supportedFeatures": []
                 }
             ],
+            "modelChangePatterns": [
+        {
+          "name": "Change component attributes",
+          "types": ["SedAttributeModelChange", "SedComputeAttributeChangeModelChange", "SedSetValueAttributeModelChange"],
+          "target": {
+            "value": "//*/@*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Add components",
+          "types": ["SedAddXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Remove components",
+          "types": ["SedRemoveXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Change components",
+          "types": ["SedChangeXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        }        
+      ],
             "simulationFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3685",
                 "version": "L1V3",
                 "supportedFeatures": []
             }],
+            "simulationTypes": ["SedUniformTimeCourseSimulation"],
             "archiveFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3686",
@@ -324,13 +445,21 @@
                 "supportedFeatures": []
             }],
             "parameters": [],
-            "dependentDimensions": [{
+            "outputDimensions": [{
                 "namespace": "SIO",
                 "id": "SIO_000418"
             }],
-            "dependentVariableTargetPatterns": [{
-                "variables": "species levels",
-                "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
+            "outputVariablePatterns": [
+                {
+                  "name": "step",
+                  "symbol": {
+                    "value": "time",
+                    "namespace": "urn:sedml:symbol"
+                  }
+                },
+                {
+                "name": "species levels",
+                "target": {"value": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies", "grammar": "XPath"}
             }],
             "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"],
             "dependencies": null,
@@ -360,12 +489,47 @@
                     "supportedFeatures": []
                 }
             ],
+            "modelChangePatterns": [
+        {
+          "name": "Change component attributes",
+          "types": ["SedAttributeModelChange", "SedComputeAttributeChangeModelChange", "SedSetValueAttributeModelChange"],
+          "target": {
+            "value": "//*/@*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Add components",
+          "types": ["SedAddXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Remove components",
+          "types": ["SedRemoveXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Change components",
+          "types": ["SedChangeXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        }        
+      ],
             "simulationFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3685",
                 "version": "L1V3",
                 "supportedFeatures": []
             }],
+            "simulationTypes": ["SedUniformTimeCourseSimulation"],
             "archiveFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3686",
@@ -373,13 +537,21 @@
                 "supportedFeatures": []
             }],
             "parameters": [],
-            "dependentDimensions": [{
+            "outputDimensions": [{
                 "namespace": "SIO",
                 "id": "SIO_000418"
             }],
-            "dependentVariableTargetPatterns": [{
-                "variables": "species levels",
-                "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
+            "outputVariablePatterns": [
+                {
+                  "name": "step",
+                  "symbol": {
+                    "value": "time",
+                    "namespace": "urn:sedml:symbol"
+                  }
+                },
+                {
+                "name": "species levels",
+                "target": {"value": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies", "grammar": "XPath"}
             }],
             "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"],
             "dependencies": null,
@@ -409,12 +581,47 @@
                     "supportedFeatures": []
                 }
             ],
+            "modelChangePatterns": [
+        {
+          "name": "Change component attributes",
+          "types": ["SedAttributeModelChange", "SedComputeAttributeChangeModelChange", "SedSetValueAttributeModelChange"],
+          "target": {
+            "value": "//*/@*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Add components",
+          "types": ["SedAddXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Remove components",
+          "types": ["SedRemoveXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Change components",
+          "types": ["SedChangeXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        }        
+      ],
             "simulationFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3685",
                 "version": "L1V3",
                 "supportedFeatures": []
             }],
+            "simulationTypes": ["SedSteadyStateSimulation"],
             "archiveFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3686",
@@ -422,10 +629,10 @@
                 "supportedFeatures": []
             }],
             "parameters": [],
-            "dependentDimensions": [],
-            "dependentVariableTargetPatterns": [{
-                "variables": "species levels",
-                "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
+            "outputDimensions": [],
+            "outputVariablePatterns": [{
+                "name": "species levels",
+                "target": {"value": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies", "grammar": "XPath"}
             }],
             "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"],
             "dependencies": null,
@@ -466,12 +673,47 @@
                     "supportedFeatures": []
                 }
             ],
+            "modelChangePatterns": [
+        {
+          "name": "Change component attributes",
+          "types": ["SedAttributeModelChange", "SedComputeAttributeChangeModelChange", "SedSetValueAttributeModelChange"],
+          "target": {
+            "value": "//*/@*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Add components",
+          "types": ["SedAddXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Remove components",
+          "types": ["SedRemoveXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Change components",
+          "types": ["SedChangeXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        }        
+      ],
             "simulationFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3685",
                 "version": "L1V3",
                 "supportedFeatures": []
             }],
+            "simulationTypes": ["SedSteadyStateSimulation"],
             "archiveFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3686",
@@ -489,10 +731,10 @@
                 "recommendedRange": null,
                 "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"]
             }],
-            "dependentDimensions": [],
-            "dependentVariableTargetPatterns": [{
-                "variables": "species levels",
-                "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
+            "outputDimensions": [],
+            "outputVariablePatterns": [{
+                "name": "species levels",
+                "target": {"value": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies", "grammar": "XPath"}
             }],
             "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"],
             "dependencies": null,
@@ -535,12 +777,47 @@
                     "supportedFeatures": []
                 }
             ],
+            "modelChangePatterns": [
+        {
+          "name": "Change component attributes",
+          "types": ["SedAttributeModelChange", "SedComputeAttributeChangeModelChange", "SedSetValueAttributeModelChange"],
+          "target": {
+            "value": "//*/@*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Add components",
+          "types": ["SedAddXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Remove components",
+          "types": ["SedRemoveXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        },
+        {
+          "name": "Change components",
+          "types": ["SedChangeXmlModelChange"],
+          "target": {
+            "value": "//*",
+            "grammar": "XPath"
+          }
+        }        
+      ],
             "simulationFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3685",
                 "version": "L1V3",
                 "supportedFeatures": []
             }],
+            "simulationTypes": ["SedSteadyStateSimulation"],
             "archiveFormats": [{
                 "namespace": "EDAM",
                 "id": "format_3686",
@@ -558,10 +835,10 @@
                 "recommendedRange": null,
                 "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"]
             }],
-            "dependentDimensions": [],
-            "dependentVariableTargetPatterns": [{
-                "variables": "species levels",
-                "targetPattern": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies"
+            "outputDimensions": [],
+            "outputVariablePatterns": [{
+                "name": "species levels",
+                "target": {"value": "/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies", "grammar": "XPath"}
             }],
             "availableSoftwareInterfaceTypes": ["desktop application", "library", "command-line application", "BioSimulators Docker image"],
             "dependencies": null,
