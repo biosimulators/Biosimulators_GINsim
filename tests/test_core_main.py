@@ -9,6 +9,7 @@
 from biosimulators_ginsim import __main__
 from biosimulators_ginsim import core
 from biosimulators_ginsim.data_model import KISAO_ALGORITHM_MAP
+from biosimulators_ginsim.utils import read_model
 from biosimulators_utils.combine import data_model as combine_data_model
 from biosimulators_utils.combine.io import CombineArchiveWriter
 from biosimulators_utils.config import get_config
@@ -113,6 +114,71 @@ class CliTestCase(unittest.TestCase):
             log_data = yaml.load(file, Loader=yaml.Loader)
         json.dumps(log_data)
 
+    # fails because bioLQM appears to ignore initial levels
+    # see https://github.com/GINsim/GINsim-python/issues/19
+    @unittest.skip('bioLQM ignores initial levels')
+    def test_exec_sbml_sed_task_with_changes(self):
+        task = sedml_data_model.Task(
+            model=sedml_data_model.Model(
+                source=os.path.join(os.path.dirname(__file__), 'fixtures', 'BIOMD0000000562_url.xml'),
+                language=sedml_data_model.ModelLanguage.SBML.value,
+            ),
+            simulation=sedml_data_model.UniformTimeCourseSimulation(
+                initial_time=0,
+                output_start_time=0,
+                output_end_time=10,
+                number_of_points=10,
+                algorithm=sedml_data_model.Algorithm(
+                    kisao_id='KISAO_0000449',
+                ),
+            ),
+        )
+        sim = task.simulation
+
+        model = read_model(task.model.source, task.model.language)
+
+        variables = []
+        for component in model.getComponents():
+            variables.append(sedml_data_model.Variable(
+                id=component.getNodeID(),
+                target="/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies[@qual:id='{}']/@level".format(
+                    component.getNodeID()),
+                target_namespaces=self.NAMESPACES,
+                task=task,
+            ))
+        preprocessed_task = core.preprocess_sed_task(task, variables)
+
+        task.model.changes = []
+        results, _ = core.exec_sed_task(task, variables, preprocessed_task=preprocessed_task)
+
+        self.assertEqual(
+            results['gsk3'][0:int(sim.number_of_points / 2 + 1)].shape,
+            results['gsk3'][-int(sim.number_of_points / 2 + 1):].shape
+        )
+        with self.assertRaises(AssertionError):
+            numpy.testing.assert_allclose(
+                results['gsk3'][0:int(sim.number_of_points / 2 + 1)],
+                results['gsk3'][-int(sim.number_of_points / 2 + 1):],
+            )
+
+        task.simulation.output_end_time = task.simulation.output_end_time / 2
+        task.simulation.number_of_points = int(task.simulation.number_of_points / 2)
+
+        results2, _ = core.exec_sed_task(task, variables, preprocessed_task=preprocessed_task)
+        numpy.testing.assert_allclose(results2['gsk3'], results['gsk3'][0:sim.number_of_points + 1])
+
+        for component in model.getComponents():
+            task.model.changes.append(sedml_data_model.ModelAttributeChange(
+                target="/sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies[@qual:id='{}']/@qual:initialLevel".format(
+                    component.getNodeID()),
+                target_namespaces=self.NAMESPACES,
+                new_value=results2[component.getNodeID()][-1],
+            ))
+        results3, _ = core.exec_sed_task(task, variables, preprocessed_task=preprocessed_task)
+
+        numpy.testing.assert_allclose(results3['gsk3'][0], results2['gsk3'][-1])
+        numpy.testing.assert_allclose(results3['gsk3'], results['gsk3'][-(sim.number_of_points + 1):])
+
     def test_exec_zginml_sed_task_successfully(self):
         task = sedml_data_model.Task(
             model=sedml_data_model.Model(
@@ -172,6 +238,12 @@ class CliTestCase(unittest.TestCase):
         with open(os.path.join(self.dirname, get_config().LOG_PATH), 'rb') as file:
             log_data = yaml.load(file, Loader=yaml.Loader)
         json.dumps(log_data)
+
+        # error handling
+        preprocessed_task = core.preprocess_sed_task(task, variables)
+        task.model.changes.append(None)
+        with self.assertRaisesRegex(ValueError, 'are not supported'):
+            core.exec_sed_task(task, variables, preprocessed_task=preprocessed_task)
 
     def test_exec_sedml_docs_in_combine_archive_successfully(self):
         doc, archive_filename = self._build_combine_archive()

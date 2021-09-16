@@ -24,11 +24,13 @@ import lxml.etree  # noqa: F401
 import numpy
 import os
 import py4j.java_gateway  # noqa: F401
+import types  # noqa: F401
 
 __all__ = [
     'validate_simulation',
     'validate_time_course',
     'get_variable_target_xpath_ids',
+    'validate_variables',
     'read_model',
     'set_up_simulation',
     'exec_simulation',
@@ -123,6 +125,59 @@ def get_variable_target_xpath_ids(variables, model_etree):
     )
 
 
+def validate_variables(variables, model, model_language, target_xpath_ids, simulation):
+    """ Get the result of each SED-ML variable
+
+    Args:
+        variables (:obj:`list` of :obj:`Variable`): variables
+        model (:obj:`py4j.java_gateway.JavaObject`): bioLQM model
+        model_language (:obj:`str`): model language
+        target_xpath_ids (:obj:`dict`): dictionary that maps XPaths to the SBML qualitative ids
+            of the corresponding objects
+        simulation (:obj:`Simulation`): analysis
+    """
+    component_ids = set(component.getNodeID() for component in model.getComponents())
+    invalid_variables = []
+
+    for variable in variables:
+        if variable.symbol:
+            if not (isinstance(simulation, UniformTimeCourseSimulation) and variable.symbol == Symbol.time.value):
+                invalid_variables.append('{}: symbol: {}'.format(variable.id, variable.symbol))
+        else:
+            if model_language == ModelLanguage.SBML.value:
+                id = target_xpath_ids[variable.target]
+            else:
+                id = variable.target
+
+            if id not in component_ids:
+                invalid_variables.append('{}: target: {}'.format(variable.id, variable.target))
+
+    if invalid_variables:
+        valid_variables = []
+
+        if isinstance(simulation, UniformTimeCourseSimulation):
+            valid_variables.append('symbol: {}'.format(Symbol.time.value))
+
+        for component_id in component_ids:
+            if model_language == ModelLanguage.SBML.value:
+                valid_variables.append(
+                    "target: /sbml:sbml/sbml:model/qual:listOfQualitativeSpecies/qual:qualitativeSpecies[@id='{}']".format(component_id))
+            else:
+                valid_variables.append(
+                    'target: {}'.format(component_id))
+
+        raise ValueError((
+            'The following variables cannot be recorded:\n'
+            '  {}\n'
+            '\n'
+            'Variables with the following symbols and targets can be recorded:\n'
+            '  {}'
+        ).format(
+            '\n  '.join(sorted(invalid_variables)),
+            '\n  '.join(sorted(valid_variables)),
+        ))
+
+
 def read_model(filename, language):
     """ Read a model
 
@@ -160,7 +215,7 @@ def set_up_simulation(simulation, config=None):
 
             * :obj:`str`: KiSAO of algorithm to execute
             * :obj:`str`: name of the :obj:`biolqm` simulation/analysis method
-            * :obj:`list` of :obj:`str`: arguments for simulation method
+            * :obj:`types.LambdaType` of :obj:`Simulation` -> :obj:`list` of :obj:`str`: arguments for simulation method
     """
     # simulation algorithm
     alg_kisao_id = simulation.algorithm.kisao_id
@@ -174,7 +229,7 @@ def set_up_simulation(simulation, config=None):
             simulation.__class__.__name__, exec_kisao_id, alg_props['name']))
 
     method = alg_props['method']
-    method_args = alg_props['method_args'](simulation)
+    method_args = []
 
     # Apply the algorithm parameter changes specified by `simulation.algorithm.parameter_changes`
     if exec_kisao_id == alg_kisao_id:
@@ -211,7 +266,11 @@ def set_up_simulation(simulation, config=None):
             warn('Unsuported algorithm parameter `{}` was ignored.'.format(change.kisao_id), BioSimulatorsWarning)
 
     # return
-    return (exec_kisao_id, method, method_args)
+    return (
+        exec_kisao_id,
+        method,
+        lambda simulation: alg_props['method_args'](simulation) + method_args,
+    )
 
 
 def exec_simulation(method_name, model, args=None):
@@ -253,14 +312,10 @@ def get_variable_results(variables, model_language, target_xpath_ids, simulation
     for variable in variables:
         variable_results[variable.id] = numpy.full((n_states,), numpy.nan)
 
-    invalid_variables = []
     for i_state, state in enumerate(raw_results):
         for variable in variables:
             if variable.symbol:
-                if isinstance(simulation, UniformTimeCourseSimulation) and variable.symbol == Symbol.time.value:
-                    variable_results[variable.id][i_state] = i_state
-                else:
-                    invalid_variables.append('{}: symbol: {}'.format(variable.id, variable.symbol))
+                variable_results[variable.id][i_state] = i_state
 
             else:
                 if model_language == ModelLanguage.SBML.value:
@@ -268,13 +323,7 @@ def get_variable_results(variables, model_language, target_xpath_ids, simulation
                 else:
                     id = variable.target
 
-                variable_results[variable.id][i_state] = state.get(id, numpy.nan)
-                if i_state == 0 and numpy.isnan(variable_results[variable.id][i_state]):
-                    invalid_variables.append('{}: target: {}'.format(variable.id, variable.target))
-
-    if invalid_variables:
-        raise ValueError('The following variables could not recorded:\n  {}'.format(
-            '\n  '.join(sorted(invalid_variables))))
+                variable_results[variable.id][i_state] = state[id]
 
     if isinstance(simulation, UniformTimeCourseSimulation):
         for key in variable_results.keys():

@@ -6,7 +6,7 @@
 :License: MIT
 """
 
-from .utils import (validate_simulation, get_variable_target_xpath_ids,
+from .utils import (validate_simulation, get_variable_target_xpath_ids, validate_variables,
                     read_model, set_up_simulation, exec_simulation, get_variable_results)
 from biosimulators_utils.combine.exec import exec_sedml_docs_in_archive
 from biosimulators_utils.config import get_config, Config  # noqa: F401
@@ -18,9 +18,12 @@ from biosimulators_utils.sedml.data_model import (Task, ModelLanguage, ModelAttr
                                                   SteadyStateSimulation, UniformTimeCourseSimulation,
                                                   Variable, Symbol)
 from biosimulators_utils.sedml.exec import exec_sed_doc as base_exec_sed_doc
+from biosimulators_utils.sedml.utils import apply_changes_to_xml_model
 from biosimulators_utils.utils.core import raise_errors_warnings
+import copy
 import lxml.etree
 import os
+import tempfile
 
 __all__ = ['exec_sedml_docs_in_combine_archive', 'exec_sed_doc', 'exec_sed_task', 'preprocess_sed_task']
 
@@ -129,66 +132,65 @@ def exec_sed_task(task, variables, preprocessed_task=None, log=None, config=None
     model = task.model
     sim = task.simulation
 
-    if config.VALIDATE_SEDML:
-        raise_errors_warnings(
-            validation.validate_task(task),
-            error_summary='Task `{}` is invalid.'.format(task.id))
-        raise_errors_warnings(
-            validation.validate_model_language(
-                task.model.language,
-                (ModelLanguage.SBML, ModelLanguage.ZGINML)),
-            error_summary='Language for model `{}` is not supported.'.format(model.id))
-        raise_errors_warnings(
-            validation.validate_model_change_types(task.model.changes, ()),
-            error_summary='Changes for model `{}` are not supported.'.format(model.id))
-        raise_errors_warnings(
-            *validation.validate_model_changes(task.model),
-            error_summary='Changes for model `{}` are invalid.'.format(model.id))
-        raise_errors_warnings(
-            validation.validate_simulation_type(task.simulation,
-                                                (UniformTimeCourseSimulation, SteadyStateSimulation)),
-            error_summary='{} `{}` is not supported.'.format(sim.__class__.__name__, sim.id))
-        raise_errors_warnings(
-            *validation.validate_simulation(task.simulation),
-            error_summary='Simulation `{}` is invalid.'.format(sim.id))
-        raise_errors_warnings(
-            *validate_simulation(task.simulation),
-            error_summary='Simulation `{}` is invalid.'.format(sim.id))
-
-    if not os.path.isfile(task.model.source):
-        raise FileNotFoundError('`{}` is not a file.'.format(task.model.source))
-
-    if model.language == ModelLanguage.SBML.value:
-        model_etree = lxml.etree.parse(task.model.source)
-        target_xpath_ids = get_variable_target_xpath_ids(variables, model_etree)
-    else:
-        model_etree = None
-        target_xpath_ids = None
-
-    # validate model
-    if config.VALIDATE_SEDML_MODELS:
-        raise_errors_warnings(*validation.validate_model(task.model, [], working_dir='.'),
-                              error_summary='Model `{}` is invalid.'.format(model.id),
-                              warning_summary='Model `{}` may be invalid.'.format(model.id))
-
     # read model
-    biolqm_model = read_model(model.source, model.language)
+    biolqm_model = preprocessed_task['model']
+    variable_target_sbml_id_map = preprocessed_task['variable_target_sbml_id_map']
+
+    # modify model
+    if model.changes:
+        if model.language == ModelLanguage.SBML.value:
+            allowed_change_types = ()
+            # allowed_change_types = (ModelAttributeChange,) # TODO: uncomment when bioLQM recognizes initial state
+            raise_errors_warnings(
+                validation.validate_model_change_types(model.changes, allowed_change_types),
+                error_summary='Changes for model `{}` are not supported.'.format(model.id))
+
+            model_etree = preprocessed_task['model_etree']
+
+            model = copy.deepcopy(model)
+            for change in model.changes:
+                change.new_value = str(int(float(change.new_value)))
+
+            apply_changes_to_xml_model(model, model_etree, sed_doc=None, working_dir=None)
+
+            model_file, model_filename = tempfile.mkstemp(suffix='.xml')
+            os.close(model_file)
+
+            model_etree.write(model_filename,
+                              xml_declaration=True,
+                              encoding="utf-8",
+                              standalone=False,
+                              pretty_print=False)
+
+            biolqm_model = read_model(model_filename, model.language)
+
+            os.remove(model_filename)
+
+        else:
+            raise_errors_warnings(
+                validation.validate_model_change_types(model.changes, ()),
+                error_summary='Changes for model `{}` are not supported.'.format(model.id))
 
     # setup simulation
-    alg_kisao_id, method_name, method_args = set_up_simulation(sim, config=config)
+    raise_errors_warnings(
+        *validate_simulation(sim),
+        error_summary='Simulation `{}` is invalid.'.format(sim.id))
+
+    alg_method_name = preprocessed_task['algorithm_method_name']
+    alg_method_args = preprocessed_task['algorithm_method_args'](sim)
 
     # run simulation
-    raw_results = exec_simulation(method_name, biolqm_model, method_args)
+    raw_results = exec_simulation(alg_method_name, biolqm_model, alg_method_args)
 
     # transform results
-    variable_results = get_variable_results(variables, model.language, target_xpath_ids, sim, raw_results)
+    variable_results = get_variable_results(variables, model.language, variable_target_sbml_id_map, sim, raw_results)
 
     # log action
     if config.LOG:
-        log.algorithm = alg_kisao_id
+        log.algorithm = preprocessed_task['algorithm_kisao_id']
         log.simulator_details = {
-            'method': method_name,
-            'arguments': method_args,
+            'method': alg_method_name,
+            'arguments': alg_method_args,
         }
 
     ############################
@@ -208,4 +210,75 @@ def preprocess_sed_task(task, variables, config=None):
     Returns:
         :obj:`object`: preprocessed information about the task
     """
-    pass
+    config = config or get_config()
+
+    # validate task
+    model = task.model
+    sim = task.simulation
+
+    if config.VALIDATE_SEDML:
+        raise_errors_warnings(
+            validation.validate_task(task),
+            error_summary='Task `{}` is invalid.'.format(task.id))
+        raise_errors_warnings(
+            validation.validate_model_language(
+                model.language,
+                (ModelLanguage.SBML, ModelLanguage.ZGINML)),
+            error_summary='Language for model `{}` is not supported.'.format(model.id))
+
+        if model.language == ModelLanguage.SBML.value:
+            allowed_change_types = (ModelAttributeChange,)
+        else:
+            allowed_change_types = ()
+        raise_errors_warnings(
+            validation.validate_model_change_types(model.changes, allowed_change_types),
+            error_summary='Changes for model `{}` are not supported.'.format(model.id))
+        raise_errors_warnings(
+            *validation.validate_model_changes(model),
+            error_summary='Changes for model `{}` are invalid.'.format(model.id))
+        raise_errors_warnings(
+            validation.validate_simulation_type(sim,
+                                                (UniformTimeCourseSimulation, SteadyStateSimulation)),
+            error_summary='{} `{}` is not supported.'.format(sim.__class__.__name__, sim.id))
+        raise_errors_warnings(
+            *validation.validate_simulation(sim),
+            error_summary='Simulation `{}` is invalid.'.format(sim.id))
+        raise_errors_warnings(
+            *validate_simulation(sim),
+            error_summary='Simulation `{}` is invalid.'.format(sim.id))
+
+    if not os.path.isfile(model.source):
+        raise FileNotFoundError('`{}` is not a file.'.format(model.source))
+
+    if model.language == ModelLanguage.SBML.value:
+        model_etree = lxml.etree.parse(model.source)
+        variable_target_sbml_id_map = get_variable_target_xpath_ids(variables, model_etree)
+    else:
+        model_etree = None
+        variable_target_sbml_id_map = None
+
+    # validate model
+    if config.VALIDATE_SEDML_MODELS:
+        raise_errors_warnings(*validation.validate_model(model, [], working_dir='.'),
+                              error_summary='Model `{}` is invalid.'.format(model.id),
+                              warning_summary='Model `{}` may be invalid.'.format(model.id))
+
+    # read model
+    biolqm_model = read_model(model.source, model.language)
+
+    # validate variables
+    validate_variables(variables, biolqm_model, model.language, variable_target_sbml_id_map, sim)
+
+    # setup simulation
+    alg_kisao_id, method_name, method_args = set_up_simulation(sim, config=config)
+
+    ############################
+    # return preprocessed information
+    return {
+        'model': biolqm_model,
+        'model_etree': model_etree,
+        'variable_target_sbml_id_map': variable_target_sbml_id_map,
+        'algorithm_kisao_id': alg_kisao_id,
+        'algorithm_method_name': method_name,
+        'algorithm_method_args': method_args,
+    }

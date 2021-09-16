@@ -1,6 +1,6 @@
 from biosimulators_ginsim.data_model import UpdatePolicy
 from biosimulators_ginsim.utils import (validate_time_course, validate_simulation, get_variable_target_xpath_ids,
-                                        read_model, set_up_simulation,
+                                        validate_variables, read_model, set_up_simulation,
                                         exec_simulation, get_variable_results)
 from biosimulators_utils.sedml.data_model import (ModelLanguage, SteadyStateSimulation,
                                                   UniformTimeCourseSimulation,
@@ -78,7 +78,7 @@ class UtilsTestCase(unittest.TestCase):
         kisao_id, method, method_args = set_up_simulation(simulation)
         self.assertEqual(kisao_id, 'KISAO_0000449')
         self.assertEqual(method, 'trace')
-        self.assertEqual(method_args, ['-m 100', '-u {}'.format(UpdatePolicy.synchronous.value)])
+        self.assertEqual(method_args(simulation), ['-m 100', '-u {}'.format(UpdatePolicy.synchronous.value)])
 
         simulation.algorithm.kisao_id = 'KISAO_0000448'
         with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'NONE'}):
@@ -91,7 +91,7 @@ class UtilsTestCase(unittest.TestCase):
                 kisao_id, method, method_args = set_up_simulation(simulation)
         self.assertEqual(kisao_id, 'KISAO_0000449')
         self.assertEqual(method, 'trace')
-        self.assertEqual(method_args, ['-m 100', '-u {}'.format(UpdatePolicy.synchronous.value)])
+        self.assertEqual(method_args(simulation), ['-m 100', '-u {}'.format(UpdatePolicy.synchronous.value)])
 
         simulation.algorithm.kisao_id = 'KISAO_0000449'
         simulation.algorithm.changes = [AlgorithmParameterChange()]
@@ -121,14 +121,14 @@ class UtilsTestCase(unittest.TestCase):
             kisao_id, method, method_args = set_up_simulation(simulation)
         self.assertEqual(kisao_id, 'KISAO_0000662')
         self.assertEqual(method, 'trapspaces')
-        self.assertEqual(method_args, [])
+        self.assertEqual(method_args(simulation), [])
 
         simulation.algorithm.kisao_id = 'KISAO_0000663'
         with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'NONE'}):
             kisao_id, method, method_args = set_up_simulation(simulation)
         self.assertEqual(kisao_id, 'KISAO_0000663')
         self.assertEqual(method, 'trapspaces')
-        self.assertEqual(method_args, ['BDD'])
+        self.assertEqual(method_args(simulation), ['BDD'])
 
         simulation.algorithm.changes.append(AlgorithmParameterChange(
             kisao_id='KISAO_0000216',
@@ -138,14 +138,14 @@ class UtilsTestCase(unittest.TestCase):
             kisao_id, method, method_args = set_up_simulation(simulation)
         self.assertEqual(kisao_id, 'KISAO_0000663')
         self.assertEqual(method, 'trapspaces')
-        self.assertEqual(method_args, ['BDD'])
+        self.assertEqual(method_args(simulation), ['BDD'])
 
         simulation.algorithm.changes[0].new_value = 'true'
         with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'NONE'}):
             kisao_id, method, method_args = set_up_simulation(simulation)
         self.assertEqual(kisao_id, 'KISAO_0000663')
         self.assertEqual(method, 'trapspaces')
-        self.assertEqual(method_args, ['BDD', 'reduced'])
+        self.assertEqual(method_args(simulation), ['BDD', 'reduced'])
 
         simulation.algorithm.changes[0].new_value = 'unsupported'
         with mock.patch.dict('os.environ', {'ALGORITHM_SUBSTITUTION_POLICY': 'NONE'}):
@@ -221,7 +221,7 @@ class UtilsTestCase(unittest.TestCase):
         variables[0].symbol = 'undefined'
         target_xpath_ids[variables[1].target] = 'undefined'
         with self.assertRaises(ValueError):
-            get_variable_results(variables, model_language, target_xpath_ids, simulation, raw_results)
+            validate_variables(variables, model, model_language, target_xpath_ids, simulation)
 
     def test_get_variable_results_zginml(self):
         filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'SuppMat_Model_Master_Model.zginml')
@@ -254,3 +254,7 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEqual(set(results.keys()), set(['time', 'AKT1', 'DKK1']))
         numpy.testing.assert_allclose(results['time'], numpy.linspace(0, 10, 10 + 1))
         self.assertEqual(len(results['AKT1']), 10 + 1)
+
+        variables[0].symbol = 'undefined'
+        with self.assertRaises(ValueError):
+            validate_variables(variables, model, model_language, target_xpath_ids, simulation)
