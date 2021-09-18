@@ -18,6 +18,7 @@ from kisao.data_model import AlgorithmSubstitutionPolicy, ALGORITHM_SUBSTITUTION
 from kisao.utils import get_preferred_substitute_algorithm_by_ids
 from ginsim.gateway import japi as ginsim_japi
 import biolqm  # noqa: F401
+import biosimulators_utils.model_lang.sbml.utils
 import biosimulators_utils.sedml.validation
 import biosimulators_utils.xml.utils
 import lxml.etree  # noqa: F401
@@ -111,14 +112,14 @@ def get_variable_target_xpath_ids(variables, model_etree):
             corresponding qualitative species
     """
     namespaces = biosimulators_utils.xml.utils.get_namespaces_for_xml_doc(model_etree)
-
+    sbml_qual_prefix, sbml_qual_uri = biosimulators_utils.model_lang.sbml.utils.get_package_namespace('qual', namespaces)
     return biosimulators_utils.sedml.validation.validate_target_xpaths(
         variables,
         model_etree,
         attr={
             'namespace': {
-                'prefix': 'qual',
-                'uri': namespaces['qual'],
+                'prefix': sbml_qual_prefix,
+                'uri': sbml_qual_uri,
             },
             'name': 'id',
         }

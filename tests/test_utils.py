@@ -47,8 +47,9 @@ class UtilsTestCase(unittest.TestCase):
     def test_get_variable_target_xpath_ids(self):
         with mock.patch('lxml.etree.parse', return_value=None):
             with mock.patch('biosimulators_utils.xml.utils.get_namespaces_for_xml_doc', return_value={'qual': None}):
-                with mock.patch('biosimulators_utils.sedml.validation.validate_target_xpaths', return_value={'x': 'X'}):
-                    self.assertEqual(get_variable_target_xpath_ids([Variable(target='x')], None), {'x': 'X'})
+                with mock.patch('biosimulators_utils.model_lang.sbml.utils.get_package_namespace', return_value=('qual', None)):
+                    with mock.patch('biosimulators_utils.sedml.validation.validate_target_xpaths', return_value={'x': 'X'}):
+                        self.assertEqual(get_variable_target_xpath_ids([Variable(target='x')], None), {'x': 'X'})
 
     def test_read_model(self):
         filename = os.path.join(os.path.dirname(__file__), 'fixtures', 'SuppMat_Model_Master_Model.zginml')
