@@ -17,6 +17,12 @@
         },
         "operatingSystemType": "Linux"
     },
+    "cli": {
+      "packageRepository": "PyPI",
+      "package": "biosimulators-ginsim",
+      "command": "biosimulators-ginsim",
+      "installationInstructions": "https://docs.biosimulators.org/Biosimulators_GINsim/installation.html"
+    },
     "pythonApi": {
       "package": "biosimulators-ginsim",
       "module": "biosimulators_ginsim",
