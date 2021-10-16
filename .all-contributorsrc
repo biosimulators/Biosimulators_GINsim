@@ -13,12 +13,40 @@
       "contributions": [
         "code"
       ]
-    }   
+    },
+    {
+      "login": "ptgm",
+      "name": "Pedro T. Monteiro",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2027375?v=4",
+      "profile": "http://pedromonteiro.org/",
+      "contributions": [
+        "tool"
+      ]
+    },
+    {
+      "login": "chaouiya",
+      "name": "Claudine Chaouiya",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40125033?v=4",
+      "profile": "https://claudine-chaouiya.pedaweb.univ-amu.fr/index.html",
+      "contributions": [
+        "tool"
+      ]
+    },
+    {
+      "login": "aurelien-naldi",
+      "name": "Aurélien Naldi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/250984?v=4",
+      "profile": "http://aurelien.naldi.info/",
+      "contributions": [
+        "tool"
+      ]
+    }
   ],
   "contributorsPerLine": 7,
   "projectName": "Biosimulators_GINsim",
   "projectOwner": "biosimulators",
   "repoType": "github",
   "repoHost": "https://github.com",
-  "skipCi": true
+  "skipCi": true,
+  "commitConvention": "none"
 }
