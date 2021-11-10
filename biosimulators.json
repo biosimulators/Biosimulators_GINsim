@@ -126,7 +126,7 @@
                 "title": "Logical modeling and analysis of cellular regulatory networks With GINsim 3.0",
                 "authors": "Aurélien Naldi, Céline Hernandez, Wassim Abou-Jaoudé, Pedro T. Monteiro, Claudine Chaouiya & Denis Thieffry",
                 "journal": "Frontiers of Physiology",
-                "volume": 9,
+                "volume": "9",
                 "year": 2018,
                 "pages": "646",
                 "identifiers": [{
@@ -139,7 +139,7 @@
                 "title": "BioLQM: A Java toolkit for the manipulation and conversion of logical qualitative models of biological networks",
                 "authors": "Aurélien Naldi",
                 "journal": "Frontiers of Physiology",
-                "volume": 9,
+                "volume": "9",
                 "year": 2018,
                 "pages": "1605",
                 "identifiers": [{
@@ -152,7 +152,7 @@
                 "title": "Logical modelling of gene regulatory networks with GINsim",
                 "authors": "Claudine Chaouiya, Aurélien Naldi & Denis Thieffry",
                 "journal": "Methods in Molecular Biology",
-                "volume": 804,
+                "volume": "804",
                 "year": 2012,
                 "pages": "463-479",
                 "identifiers": [{
@@ -165,8 +165,8 @@
                 "title": "Logical modelling of regulatory networks with GINsim 2.3",
                 "authors": "Aurélien Naldi, Duncan Berenguier, Adrien Fauré, Fabrice Lopez, Denis Thieffry & Claudine Chaouiya",
                 "journal": "Biosystems",
-                "volume": 97,
-                "issue": 2,
+                "volume": "97",
+                "issue": "2",
                 "year": 2009,
                 "pages": "134-139",
                 "identifiers": [{
@@ -179,8 +179,8 @@
                 "title": "GINsim: a software suite for the qualitative modelling, simulation and analysis of regulatory networks",
                 "authors": "AG Gonzalez, Aurélien Naldi, L Sanchez, Denis Thieffry & Claudine Chaouiya",
                 "journal": "Biosystems",
-                "volume": 84,
-                "issue": 2,
+                "volume": "84",
+                "issue": "2",
                 "year": 2006,
                 "pages": "91-100",
                 "identifiers": [{
@@ -646,7 +646,7 @@
                 "title": "Decision diagrams for the representation and analysis of logical models of genetic networks",
                 "authors": "Aurélien Naldi, Denis Thieffry & Claudine Chaouiya",
                 "journal": "Computational Methods in Systems Biology",
-                "volume": 4695,
+                "volume": "4695",
                 "year": 2007,
                 "identifiers": [{
                     "namespace": "doi",
@@ -748,8 +748,8 @@
                 "title": "Computing maximal and minimal trap spaces of Boolean networks",
                 "authors": "Hannes Klarner, Alexander Bockmayr & Heike Siebert",
                 "journal": "Natural Computing",
-                "volume": 14,
-                "issue": 4,
+                "volume": "14",
+                "issue": "4",
                 "year": 2015,
                 "pages": "535-544",
                 "identifiers": [{
